@@ -55,16 +55,19 @@ func LoadConfig(configPath string) (*Config, error) {
 
 	// If no config path specified, look in default locations
 	if configPath == "" {
-		homeDir, err := os.UserHomeDir()
+		// First, try current directory
+		currentDir, err := os.Getwd()
 		if err == nil {
-			// Try ~/.config/dloom/config.yaml
-			configPath = filepath.Join(homeDir, ".config", "dloom", "config.yaml")
+			configPath = filepath.Join(currentDir, "dloom", "config.yaml")
 			if _, err := os.Stat(configPath); os.IsNotExist(err) {
-				// Try ~/.dloom.yaml
-				configPath = filepath.Join(homeDir, ".dloom.yaml")
-				if _, err := os.Stat(configPath); os.IsNotExist(err) {
-					// No config file found, use defaults
-					return config, nil
+				// Next, try ~/.config/dloom/config.yaml
+				homeDir, err := os.UserHomeDir()
+				if err == nil {
+					configPath = filepath.Join(homeDir, ".config", "dloom", "config.yaml")
+					if _, err := os.Stat(configPath); os.IsNotExist(err) {
+						// No config file found, use defaults
+						return config, nil
+					}
 				}
 			}
 		}
