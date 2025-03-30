@@ -1,0 +1,98 @@
+# dloom configuration file
+version: 0.1.0
+
+# Global configuration
+sourceDir: "/home/username/dotfiles"
+targetDir: "/home/username"
+backupDir: "/home/username/.dloom/backups"
+verbose: true
+
+# Package-specific configurations
+packages:
+  vim:
+    # Package-level conditions (apply to all files unless overridden)
+    conditions:
+      os:
+        - "linux"
+        - "darwin"
+
+    # File-specific configurations
+    files:
+      # Exact file match
+      "init.vim":
+        # Override target for this specific file
+        targetPath: "/home/username/.config/nvim/init.vim"
+
+      # Regex pattern match (starts with vimrc)
+      "^vimrc.*":
+        conditions:
+          os:
+            - "linux"
+
+      # Another specific file
+      "plugins.vim":
+        conditions:
+          executable:
+            - "node"  # Only link if Node.js is installed
+
+  git:
+    files:
+      # Different gitconfig based on OS
+      "gitconfig":
+        conditions:
+          os:
+            - "linux"
+
+      "gitconfig.darwin":
+        targetPath: "/home/username/.gitconfig"
+        conditions:
+          os:
+            - "darwin"
+
+  shell:
+    # Different shell configs based on what's installed
+    files:
+      "zshrc":
+        conditions:
+          executable:
+            - "zsh"
+
+      "bashrc":
+        conditions:
+          executable:
+            - "bash"
+
+  # Example with both package and file conditions
+  tmux:
+    conditions:
+      os:
+        - "linux"
+        - "darwin"
+
+    files:
+      # Default tmux.conf for all systems
+      "tmux.conf": {}
+
+      # OS-specific overrides
+      "tmux.conf.linux":
+        targetPath: "/home/username/.tmux.conf"
+        conditions:
+          os:
+            - "linux"
+
+      "tmux.conf.darwin":
+        targetPath: "/home/username/.tmux.conf"
+        conditions:
+          os:
+            - "darwin"
+
+      # Version-specific configurations
+      "tmux.new.conf":
+        conditions:
+          executable_version:
+            "tmux": ">=3.0"
+
+      "tmux.legacy.conf":
+        conditions:
+          executable_version:
+            "tmux": "<3.0"
