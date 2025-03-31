@@ -5,7 +5,7 @@ description: dloom is a CLI tool that links and unlinks configuration files (or 
 adopt-info: dloom
 
 grade: devel
-confinement: devmode
+confinement: classic
 
 platforms:
   amd64:
@@ -16,6 +16,7 @@ parts:
     plugin: go
     source: https://github.com/swaranga/dloom
     source-type: git
+    source-branch: main
     override-pull: |
       snapcraftctl pull
       snapcraftctl set-version \
