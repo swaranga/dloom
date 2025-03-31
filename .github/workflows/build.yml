@@ -1,15 +1,12 @@
-name: Release
+name: Build Main Branch
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-
-permissions:
-  contents: write
+    branches:
+      - 'main'
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,9 +21,5 @@ jobs:
       - name: Build the project
         run: go build -o build/dloom ./cmd/dloom
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: build/dloom
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify build output
+        run: ls -l build/dloom
