@@ -77,9 +77,9 @@ When you run `dloom link vim`, it will create:
 
 ```
 ~/                                ~/dotfiles/
-├── .vimrc ----------------→        vim/vimrc
-└── .config/                        └── config/ (regular directory; created if not exists)
-    └── plugins.vim --------→           └── plugins.vim
+├── .vimrc ----------------→      ├── vim/vimrc
+└── .config/                      └── config/ (regular directory; created if not exists)
+    └── plugins.vim --------→         └── plugins.vim
 ```
 
 Notice that:
