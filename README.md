@@ -48,6 +48,56 @@ dloom -d link vim
 dloom unlink vim
 ```
 
+### How Symlinks Work
+
+Consider this example dotfiles repository:
+
+```
+~/dotfiles/
+├── vim/
+│   ├── vimrc
+│   └── config/
+│       └── plugins.vim
+├── bash/
+│   ├── bashrc
+│   └── bash_profile
+└── tmux/
+    └── tmux.conf
+```
+
+When you run `dloom link vim` from the `~/dotfiles` directory, it will:
+
+1. Create directories in your home directory that mirror the structure in `~/dotfiles/vim/`
+2. Create symlinks for each file (not directories):
+
+```
+~/.vimrc → ~/dotfiles/vim/vimrc
+~/.config/plugins.vim → ~/dotfiles/vim/config/plugins.vim
+```
+
+Different commands and their effects:
+
+```bash
+# Link vim package to home directory
+dloom link vim
+
+# Link vim package to a different target directory
+dloom -t ~/.config/nvim link vim
+# Creates: ~/.config/nvim/vimrc → ~/dotfiles/vim/vimrc
+#          ~/.config/nvim/config/plugins.vim → ~/dotfiles/vim/config/plugins.vim
+
+# Link from a different source directory
+dloom -s /path/to/dotfiles link vim
+# Uses: /path/to/dotfiles/vim/ as the source
+
+# Dry run to preview changes
+dloom -d link vim
+# Output:
+# Would create directory: /home/user/.config
+# Would link: /home/user/.vimrc → /home/user/dotfiles/vim/vimrc
+# Would link: /home/user/.config/plugins.vim → /home/user/dotfiles/vim/config/plugins.vim
+```
+
 ## Configuration
 
 `dloom` can be configured via a YAML file. By default, it looks for:
