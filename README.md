@@ -99,13 +99,13 @@ dloom -d link vim
 # Would link: /home/user/.config/plugins.vim → /home/user/dotfiles/vim/config/plugins.vim
 ```
 
-## Configuration
+## Configuration (Optional)
 
 `dloom` can be (optionally) configured via a YAML file. By default, it looks for:
 1. `./dloom/config.yaml` (in current directory)
 2. `~/.config/dloom/config.yaml` (in user config directory)
 
-Or specify a custom location with `-c path/to/config.yaml`.
+Or specify a custom location with `-c path/to/config.yaml`. For easiest configuration, create a `dloom/config.yaml` file in the root of your dotfiles repository.
 
 ### Basic Configuration
 
@@ -154,6 +154,10 @@ packages:
           executable_version:
             "tmux": ">=3.0"  # Only link for tmux 3.0+
 ```
+
+### Full Configuration
+
+For a complete example, check the `examples/` directory in the repository. It contains various configurations for different setups.
 
 ## Usage
 
@@ -211,7 +215,7 @@ dloom/
 │   ├── link/           # Link implementation
 │   ├── unlink/         # Unlink implementation
 │   └── setup/          # System setup implementation
-└── pkg/                # Public packages
+└── examples/           # Sample configurations
 ```
 
 ## Contributing
