@@ -3,6 +3,7 @@ package unlink
 
 import (
 	"fmt"
+	"github.com/swaranga/dloom/internal"
 	"os"
 	"path/filepath"
 	"sort"
@@ -21,18 +22,18 @@ type Options struct {
 }
 
 // UnlinkPackages removes symlinks for all specified packages
-func UnlinkPackages(opts Options) error {
+func UnlinkPackages(opts Options, logger *internal.Logger) error {
 	if len(opts.Packages) == 0 {
 		return fmt.Errorf("no packages specified")
 	}
 
 	for _, pkg := range opts.Packages {
-		if err := UnlinkPackage(pkg, opts.Config); err != nil {
+		if err := UnlinkPackage(pkg, opts.Config, logger); err != nil {
 			return fmt.Errorf("failed to unlink package %s: %w", pkg, err)
 		}
 
 		if opts.Config.Verbose {
-			fmt.Printf("Successfully unlinked package: %s\n", pkg)
+			logger.LogTrace("Successfully unlinked package: %s", pkg)
 		}
 	}
 
@@ -40,12 +41,12 @@ func UnlinkPackages(opts Options) error {
 }
 
 // UnlinkPackage removes symlinks for a single package
-func UnlinkPackage(pkgName string, cfg *config.Config) error {
+func UnlinkPackage(pkgName string, cfg *config.Config, logger *internal.Logger) error {
 	// Check if package has conditions and if they match
 	pkgConfig := cfg.GetEffectiveConfig(pkgName, "")
 	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions) {
 		if cfg.ShouldBeVerbose(pkgName, "") {
-			fmt.Printf("Skipping package %s: conditions not met\n", pkgName)
+			logger.LogTrace("Skipping package %s: conditions not met", pkgName)
 		}
 		return nil
 	}
@@ -87,7 +88,7 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 		fileConfig := cfg.GetEffectiveConfig(pkgName, relPath)
 		if fileConfig.Conditions != nil && !cfg.MatchesConditions(fileConfig.Conditions) {
 			if cfg.ShouldBeVerbose(pkgName, relPath) {
-				fmt.Printf("Skipping file %s: conditions not met\n", relPath)
+				logger.LogTrace("Skipping file %s: conditions not met", relPath)
 			}
 			return nil
 		}
@@ -102,7 +103,7 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 		}
 
 		// It's a file, handle unlinking
-		return unlinkFile(sourcePath, targetPath, relPath, pkgName, cfg)
+		return unlinkFile(sourcePath, targetPath, relPath, pkgName, cfg, logger)
 	})
 
 	if err != nil {
@@ -129,15 +130,15 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 
 			if len(entries) == 0 {
 				if cfg.IsDryRun(pkgName, "") {
-					fmt.Printf("Would remove empty directory: %s\n", dir)
+					logger.LogDryRun("Would remove empty directory: %s", dir)
 				} else {
 					if err := os.Remove(dir); err != nil {
 						// Non-critical error, just log and continue
 						if cfg.ShouldBeVerbose(pkgName, "") {
-							fmt.Printf("Failed to remove directory %s: %v\n", dir, err)
+							logger.LogWarning("Failed to remove directory %s: %v", dir, err)
 						}
 					} else if cfg.ShouldBeVerbose(pkgName, "") {
-						fmt.Printf("Removed empty directory: %s\n", dir)
+						logger.LogTrace("Removed empty directory: %s", dir)
 					}
 				}
 			}
@@ -148,14 +149,14 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 }
 
 // unlinkFile removes a symlink if it points to the expected source
-func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Config) error {
+func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Config, logger *internal.Logger) error {
 	// Check if target exists
 	fi, err := os.Lstat(targetPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Target doesn't exist, nothing to unlink
 			if cfg.ShouldBeVerbose(pkgName, relPath) {
-				fmt.Printf("No symlink found at %s\n", targetPath)
+				logger.LogTrace("No symlink found at %s", targetPath)
 			}
 			return nil
 		}
@@ -166,7 +167,7 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Con
 	if fi.Mode()&os.ModeSymlink == 0 {
 		// Not a symlink, leave it alone
 		if cfg.ShouldBeVerbose(pkgName, relPath) {
-			fmt.Printf("Not a symlink: %s\n", targetPath)
+			logger.LogTrace("Not a symlink: %s", targetPath)
 		}
 		return nil
 	}
@@ -180,14 +181,14 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Con
 	// Only remove if it points to our source file
 	if linkDest == sourcePath {
 		if cfg.IsDryRun(pkgName, relPath) {
-			fmt.Printf("Would remove symlink: %s -> %s\n", targetPath, sourcePath)
+			logger.LogDryRun("Would remove symlink: %s -> %s", targetPath, sourcePath)
 		} else {
 			if err := os.Remove(targetPath); err != nil {
 				return fmt.Errorf("failed to remove symlink %s: %w", targetPath, err)
 			}
 
 			if cfg.ShouldBeVerbose(pkgName, relPath) {
-				fmt.Printf("Removed symlink: %s\n", targetPath)
+				logger.LogTrace("Removed symlink: %s\n", targetPath)
 			}
 		}
 	} else if cfg.ShouldBeVerbose(pkgName, relPath) {
@@ -200,7 +201,7 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Con
 		// Check if backup exists
 		if _, err := os.Stat(backupPath); err == nil {
 			if cfg.IsDryRun(pkgName, relPath) {
-				fmt.Printf("Would restore from backup: %s -> %s\n", backupPath, targetPath)
+				logger.LogDryRun("Would restore from backup: %s -> %s", backupPath, targetPath)
 			} else {
 				// Copy backup back to target
 				if err := copyFile(backupPath, targetPath); err != nil {
@@ -208,12 +209,12 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Con
 				}
 
 				if cfg.ShouldBeVerbose(pkgName, relPath) {
-					fmt.Printf("Restored from backup: %s -> %s\n", backupPath, targetPath)
+					logger.LogTrace("Restored from backup: %s -> %s", backupPath, targetPath)
 				}
 
 				// Remove the backup
 				if err := os.Remove(backupPath); err != nil {
-					fmt.Printf("Warning: Failed to remove backup %s: %v\n", backupPath, err)
+					logger.LogWarning("Warning: Failed to remove backup %s: %v", backupPath, err)
 				}
 			}
 		}
@@ -222,14 +223,25 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Con
 	return nil
 }
 
-// copyFile copies a file from src to dst
+// copyFile copies a file from src to dst and retains the file permissions.
 func copyFile(src, dst string) error {
+	// Read the source file
 	sourceData, err := os.ReadFile(src)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(dst, sourceData, 0644)
+	// Get the file information to retrieve permissions
+	fileInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	// Extract the permissions from the file information
+	sourcePermissions := fileInfo.Mode().Perm()
+
+	// Write the data to the destination with the same permissions
+	return os.WriteFile(dst, sourceData, sourcePermissions)
 }
 
 // sortByDepth sorts paths by depth (deepest first)

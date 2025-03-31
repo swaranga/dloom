@@ -17,7 +17,7 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
   - This is the main difference from GNU Stow. _It does mean that addition of a file to a directory in your dotfiles repository will not automatically create a symlink for it. You will need to run `dloom link` again to create the symlink for the new file._
   - Additionally, links for files can have different names in the target directory. This allows us you to have separate dotfiles for different environments (e.g., macOS vs linux) without needing to maintain separate branches or repositories but still have the same name for the symlinked file.
 - **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools, tool versions).
-- **Hierarchical Configuration**: Override settings at global, package, or file level including support for regex patterns.
+- **Customize setup (optional)**: Allows customizing how the system is setup using a configuration file. Override settings at global, package, or file level including support for regex patterns.
 - **Backup System**: Automatically back up existing files before replacing them.
 - **Dry Run Mode**: Preview changes without modifying your system.
 - **Cross-Platform**: Works consistently across macOS and Linux.

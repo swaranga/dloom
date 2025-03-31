@@ -2,49 +2,35 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"github.com/swaranga/dloom/internal"
 	"github.com/swaranga/dloom/internal/config"
 	"github.com/swaranga/dloom/internal/link"
 	"github.com/swaranga/dloom/internal/setup"
 	"github.com/swaranga/dloom/internal/unlink"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // Command-line flags
 var (
-	configPath  string
-	force       bool
-	verbose     bool
-	dryRun      bool
-	sourceDir   string
-	targetDir   string
-	packageArgs stringSliceFlag // Custom type to handle multiple package args
+	configPath string
+	force      bool
+	verbose    bool
+	dryRun     bool
+	sourceDir  string
+	targetDir  string
+	noColor    bool
 )
-
-// stringSliceFlag is a custom flag type that allows for multiple values
-type stringSliceFlag []string
-
-func (s *stringSliceFlag) String() string {
-	return strings.Join(*s, ",")
-}
-
-func (s *stringSliceFlag) Set(value string) error {
-	// Handle comma-separated values
-	if strings.Contains(value, ",") {
-		*s = append(*s, strings.Split(value, ",")...)
-	} else {
-		*s = append(*s, value)
-	}
-	return nil
-}
 
 func init() {
 	// Define command-line flags
 	flag.StringVar(&configPath, "config", "", "Path to config file")
 	flag.StringVar(&configPath, "c", "", "Path to config file (shorthand)")
+
+	flag.BoolVar(&noColor, "no-color", false, "Whether to disable color output")
 
 	flag.BoolVar(&force, "force", false, "Force overwriting existing files")
 	flag.BoolVar(&force, "f", false, "Force overwriting existing files (shorthand)")
@@ -63,10 +49,6 @@ func init() {
 	flag.StringVar(&targetDir, "target", "", "Target directory (defaults to home directory)")
 	flag.StringVar(&targetDir, "dest", "", "Target directory (alias)")
 	flag.StringVar(&targetDir, "t", "", "Target directory (shorthand)")
-
-	// Add package flag that can be specified multiple times
-	flag.Var(&packageArgs, "package", "Package name (can be used multiple times or as comma-separated list)")
-	flag.Var(&packageArgs, "p", "Package name (shorthand)")
 }
 
 func main() {
@@ -83,7 +65,6 @@ func main() {
 		flag.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  dloom link vim bash        # Link vim and bash packages\n")
-		fmt.Fprintf(os.Stderr, "  dloom -p vim,bash link     # Same as above using -p flag\n")
 		fmt.Fprintf(os.Stderr, "  dloom -v -d link vim       # Verbose dry-run for vim package\n")
 	}
 
@@ -133,37 +114,35 @@ func main() {
 	command := args[0]
 	cmdArgs := args[1:]
 
-	// If packages were specified via -p/--package flags, use those instead of command arguments
-	// but only for link and unlink commands
-	if len(packageArgs) > 0 && (command == "link" || command == "unlink") {
-		cmdArgs = packageArgs
+	// initialized the logger
+	logger := internal.Logger{
+		UseColors: !noColor,
 	}
 
 	var cmdErr error
 	switch command {
 	case "link":
-		cmdErr = handleLink(cmdArgs, cfg)
+		cmdErr = handleLink(cmdArgs, cfg, &logger)
 	case "unlink":
-		cmdErr = handleUnlink(cmdArgs, cfg)
+		cmdErr = handleUnlink(cmdArgs, cfg, &logger)
 	case "setup":
-		cmdErr = handleSetup(cmdArgs, cfg)
+		cmdErr = handleSetup(cmdArgs, cfg, &logger)
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
+		logger.LogError("Unknown command: %s", command)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	if cmdErr != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", cmdErr)
+		logger.LogError("Error: %v\n", cmdErr)
 		os.Exit(1)
 	}
 }
 
 // handleLink handles the "link" command
-func handleLink(args []string, cfg *config.Config) error {
+func handleLink(args []string, cfg *config.Config, logger *internal.Logger) error {
 	if len(args) == 0 {
-		return fmt.Errorf("no packages specified for link command\n" +
-			"Use: dloom link <package>... or dloom -p <package>[,<package>...] link")
+		return errors.New("no packages specified for link command")
 	}
 
 	opts := link.Options{
@@ -171,13 +150,13 @@ func handleLink(args []string, cfg *config.Config) error {
 		Packages: args,
 	}
 
-	return link.LinkPackages(opts)
+	return link.LinkPackages(opts, logger)
 }
 
 // handleUnlink handles the "unlink" command
-func handleUnlink(args []string, cfg *config.Config) error {
+func handleUnlink(args []string, cfg *config.Config, logger *internal.Logger) error {
 	if len(args) == 0 {
-		return fmt.Errorf("no packages specified for unlink command\n" +
+		return errors.New("no packages specified for unlink command\n" +
 			"Use: dloom unlink <package>... or dloom -p <package>[,<package>...] unlink")
 	}
 
@@ -186,13 +165,13 @@ func handleUnlink(args []string, cfg *config.Config) error {
 		Packages: args,
 	}
 
-	return unlink.UnlinkPackages(opts)
+	return unlink.UnlinkPackages(opts, logger)
 }
 
 // handleSetup handles the "setup" command
-func handleSetup(args []string, cfg *config.Config) error {
+func handleSetup(args []string, cfg *config.Config, logger *internal.Logger) error {
 	if len(args) == 0 {
-		return fmt.Errorf("no scripts specified for setup command")
+		return errors.New("no scripts specified for setup command")
 	}
 
 	opts := setup.Options{
@@ -200,5 +179,5 @@ func handleSetup(args []string, cfg *config.Config) error {
 		Scripts: args,
 	}
 
-	return setup.RunScripts(opts)
+	return setup.RunScripts(opts, logger)
 }
