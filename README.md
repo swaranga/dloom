@@ -25,6 +25,10 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ## Installation
 
+### Pre-built Binaries
+
+`dloom` is a single cross-platform binary and can be installed on macOS and Linux. You can download the latest release from the GitHub releases page. See: https://github.com/swaranga/dloom/releases/. Simply download the binary, make it executable and place it in your `PATH`.
+
 ### From Source
 
 **Requirements:**
