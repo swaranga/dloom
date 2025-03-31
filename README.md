@@ -63,12 +63,12 @@ Consider this example dotfiles repository:
 ```
 ~/dotfiles/
 ├── vim/
-│   ├── vimrc
-│   └── config/
+│   ├── .vimrc
+│   └── .config/
 │       └── plugins.vim
 ├── bash/
-│   ├── bashrc
-│   └── bash_profile
+│   ├── .bashrc
+│   └── .bash_profile
 └── tmux/
     └── tmux.conf
 ```
@@ -76,10 +76,10 @@ Consider this example dotfiles repository:
 When you run `dloom link vim`, it will create:
 
 ```
-~/                                ~/dotfiles/
-├── .vimrc ----------------→      ├── vim/vimrc
-└── .config/                      └── config/ (regular directory; created if not exists)
-    └── plugins.vim --------→         └── plugins.vim
+~/                                                          ~/dotfiles/
+├── .vimrc ------------------------------------------>      ├── vim/.vimrc
+└── .config/ (regular directory; created if not exists)     └── .config/
+    └── plugins.vim --------------------------------->          └── plugins.vim
 ```
 
 Notice that:
@@ -95,8 +95,8 @@ dloom link vim
 
 # Link vim package to a different target directory
 dloom -t ~/.config/nvim link vim
-# Creates: ~/.config/nvim/vimrc → ~/dotfiles/vim/vimrc
-#          ~/.config/nvim/config/plugins.vim → ~/dotfiles/vim/config/plugins.vim
+# Creates: ~/.config/nvim/.vimrc → ~/dotfiles/vim/.vimrc
+#          ~/.config/nvim/.config/plugins.vim → ~/dotfiles/vim/.config/plugins.vim
 
 # Link from a different source directory
 dloom -s /path/to/dotfiles link vim
@@ -105,8 +105,8 @@ dloom -s /path/to/dotfiles link vim
 # Dry run to preview changes
 dloom -d link vim
 # Output:
-# Would create directory: /home/user/.config
-# Would link: /home/user/.vimrc → /home/user/dotfiles/vim/vimrc
+# Would create a regular directory: /home/user/.config
+# Would link: /home/user/.vimrc → /home/user/dotfiles/vim/.vimrc
 # Would link: /home/user/.config/plugins.vim → /home/user/dotfiles/vim/.config/plugins.vim
 ```
 
@@ -122,12 +122,12 @@ Or specify a custom location with `-c path/to/config.yaml`. For easiest configur
 
 ```yaml
 # Global settings
-sourceDir: "~/dotfiles"     # Where your dotfiles are stored
-targetDir: "~"              # Where to create symlinks
-backupDir: "~/.dloom/backups"  # Where to back up existing files
-verbose: true               # Enable detailed output
-force: false                # Don't overwrite without asking
-dryRun: false               # Actually make changes
+sourceDir: "~/dotfiles"     # Where your dotfiles are stored; default is current directory
+targetDir: "~"              # Where to create symlinks; default is home directory
+backupDir: "~/.dloom/backups"  # Where to back up existing files; default is ~/.dloom/backups
+verbose: true               # Enable detailed output; default is false
+force: false                # Don't overwrite without asking; default is false
+dryRun: false               # Actually make changes; default is false
 
 # Package-specific settings
 packages:
