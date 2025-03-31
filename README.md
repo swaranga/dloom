@@ -230,7 +230,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Inspired by [https://www.gnu.org/software/stow/](GNU%20Stow) and other dotfile managers
+- Inspired by [GNU Stow](https://www.gnu.org/software/stow/) and other dotfile managers
 - Built with Go
 
 ---
