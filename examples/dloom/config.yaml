@@ -83,11 +83,13 @@ packages:
     files:
       "tmux.conf.new":
         targetDir: "/home/username"
+        targetName: ".tmux.conf"  # Symlink will be created as .tmux.conf
         conditions:
           executable_version:
             "tmux": ">=3.0"
       "tmux.conf.legacy":
         targetDir: "/home/username"
+        targetName: ".tmux.conf"  # Symlink will be created as .tmux.conf
         conditions:
           executable_version:
             "tmux": "<3.0"

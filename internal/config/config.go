@@ -37,6 +37,7 @@ type PackageConfig struct {
 
 type FileConfig struct {
 	TargetDir  string        `yaml:"targetDir"`
+	TargetName string        `yaml:"targetName"`
 	BackupDir  string        `yaml:"backupDir"`
 	Force      *bool         `yaml:"force"`
 	Verbose    *bool         `yaml:"verbose"`
@@ -131,7 +132,7 @@ func (c *Config) GetTargetPath(packageName, relativePath string) string {
 	effectiveConfig := c.GetEffectiveConfig(packageName, relativePath)
 
 	// Construct the target path using the effective target directory
-	return filepath.Join(effectiveConfig.TargetDir, relativePath)
+	return filepath.Join(effectiveConfig.TargetDir, effectiveConfig.TargetName)
 }
 
 // GetBackupPath returns the path where a file should be backed up
@@ -183,6 +184,7 @@ func (c *Config) GetEffectiveConfig(packageName, relativePath string) *FileConfi
 	// Start with default settings derived from global config
 	effectiveConfig := &FileConfig{
 		TargetDir:  c.TargetDir,
+		TargetName: relativePath, // Default to the file name
 		BackupDir:  c.BackupDir,
 		Force:      &c.Force,
 		Verbose:    &c.Verbose,
@@ -244,6 +246,13 @@ func (c *Config) GetEffectiveConfig(packageName, relativePath string) *FileConfi
 		if fileConfig != nil {
 			if fileConfig.TargetDir != "" {
 				effectiveConfig.TargetDir = fileConfig.TargetDir
+			}
+
+			if fileConfig.TargetName != "" {
+				// First extract the directory from the relative path
+				// and then join it with the target name
+				relativePathDir := filepath.Dir(relativePath)
+				effectiveConfig.TargetName = filepath.Join(relativePathDir, fileConfig.TargetName)
 			}
 
 			if fileConfig.BackupDir != "" {

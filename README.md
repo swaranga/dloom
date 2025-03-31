@@ -8,13 +8,14 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ## Overview
 
-`dloom` is a CLI tool that links and unlinks your configuration files to your development machine. It manages symlinks between your dotfiles repository and your home directory, while also providing system bootstrapping capabilities. The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by focusing on file-level symlinks rather than directory-level symlinks. This allows for the creation of symlinks for individual files, enabling other applications to add files to the same directories without them being tracked in your dotfiles repository.
+`dloom` is a CLI tool that links and unlinks your configuration files (or "dotfiles") to your development machine. It manages symlinks between your dotfiles repository and your home directory, while also providing system bootstrapping capabilities. The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by focusing on file-level symlinks rather than directory-level symlinks. This allows for the creation of symlinks for individual files, enabling other applications to add files to the same directories without them being tracked in your dotfiles repository.
 
 ## Features
 
 - **Symlink Management**: Create and manage symlinks for your dotfiles with ease.
 - **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo.
   - This is the main difference from GNU Stow. _It does mean that addition of a file to a directory in your dotfiles repository will not automatically create a symlink for it. You will need to run `dloom link` again to create the symlink for the new file._
+  - Additionally, links for files can have different names in the target directory. This allows us you to have separate dotfiles for different environments (e.g., macOS vs linux) without needing to maintain separate branches or repositories but still have the same name for the symlinked file.
 - **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools, tool versions).
 - **Hierarchical Configuration**: Override settings at global, package, or file level including support for regex patterns.
 - **Backup System**: Automatically back up existing files before replacing them.
@@ -41,6 +42,12 @@ go build -o build/dloom
 
 ## Quick Start
 
+dloom has two main commands: `link` and `unlink`. The `link` command creates symlinks for your dotfiles, while the `unlink` command removes them.
+
+### Linking Dotfiles
+
+To link your dotfiles, run:
+
 ```bash
 # Link all dotfiles from your vim package
 dloom link vim
@@ -53,9 +60,6 @@ dloom -v link vim
 
 # Preview changes without making them
 dloom -d link vim
-
-# Unlink a package
-dloom unlink vim
 ```
 
 ### How Symlinks Work
@@ -112,6 +116,25 @@ dloom -d link vim
 # Would link: /home/user/.config/plugins.vim → /home/user/dotfiles/vim/.config/plugins.vim
 ```
 
+### Unlinking Dotfiles
+To remove the symlinks created by `dloom`, use the `unlink` command:
+
+```bash
+# Unlink all dotfiles from your vim package
+dloom unlink vim
+```
+
+Unlink will only remove links if they were created by `dloom`, i.e - if the links are pointing to files in the source directory. Any extra files in the target directory will remain untouched. If `dloom` finds any backups for files that were unlinked, it will restore them. Finally, if the target directory becomes empty after unlinking (and if no backups were found), the directory will be removed. 
+
+### Dry Run
+To preview what would happen without making any changes, use the `-d` or `--dry-run` option:
+
+```bash
+dloom -d link vim
+```
+
+This will show you what files would be linked or unlinked without actually performing the operation.
+
 ## Configuration (Optional)
 
 `dloom` can be (optionally) configured via a YAML file. By default, it looks for:
@@ -150,11 +173,8 @@ packages:
       executable:
         - "tmux"  # Only link if tmux is installed
     
-    # File-specific configurations
-    files:
-      # Regular file
-      "tmux.conf": {}
-      
+    # File-specific configurations (optional; overrides package settings and only needed if defaults are not sufficient)
+    files:      
       # File with regex pattern matching
       "regex:^tmux.*\.local$":
         conditions:
@@ -163,6 +183,7 @@ packages:
       
       # Version-specific configurations
       "tmux.new.conf":
+        targetName: "tmux.conf"  # Creates the link with a different name
         conditions:
           executable_version:
             "tmux": ">=3.0"  # Only link for tmux 3.0+
@@ -252,4 +273,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-*dloom - Weave your digital environment together*
+*dloom - Weave your development environment*

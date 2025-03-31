@@ -142,7 +142,7 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Confi
 		// Target exists but is not the correct symlink
 		if !cfg.ShouldForce(pkgName, relPath) {
 			// Ask user for confirmation before removing
-			fmt.Printf("Target already exists: %s. Replace? [y/N] ", targetPath)
+			fmt.Printf("Target already exists: %s, rel-path: %s, pkg: %s. Replace? [y/N] ", targetPath, relPath, pkgName)
 			var response string
 			fmt.Scanln(&response)
 			if strings.ToLower(response) != "y" {
