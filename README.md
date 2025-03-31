@@ -11,6 +11,7 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 ## Features
 
 - **Smart Symlink Management**: Create and manage symlinks for your dotfiles with ease
+    - **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo
 - **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools)
 - **Hierarchical Configuration**: Override settings at global, package, or file level
 - **Backup System**: Automatically back up existing files before replacing them
@@ -100,7 +101,7 @@ dloom -d link vim
 
 ## Configuration
 
-`dloom` can be configured via a YAML file. By default, it looks for:
+`dloom` can be (optionally) configured via a YAML file. By default, it looks for:
 1. `./dloom/config.yaml` (in current directory)
 2. `~/.config/dloom/config.yaml` (in user config directory)
 
@@ -229,7 +230,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Inspired by GNU Stow and other dotfile managers
+- Inspired by [https://www.gnu.org/software/stow/](GNU%20Stow) and other dotfile managers
 - Built with Go
 
 ---
