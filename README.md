@@ -64,7 +64,7 @@ Consider this example dotfiles repository:
 ~/dotfiles/
 ├── vim/
 │   ├── vimrc
-│   └── .config/
+│   └── config/
 │       └── plugins.vim
 ├── bash/
 │   ├── bashrc
@@ -73,15 +73,19 @@ Consider this example dotfiles repository:
     └── tmux.conf
 ```
 
-When you run `dloom link vim` from the `~/dotfiles` directory, it will:
-
-1. Create directories in your home directory that mirror the structure in `~/dotfiles/vim/`
-2. Create symlinks for each file (not directories):
+When you run `dloom link vim`, it will create:
 
 ```
-~/.vimrc → ~/dotfiles/vim/vimrc
-~/.config/plugins.vim → ~/dotfiles/vim/.config/plugins.vim
+~/                                ~/dotfiles/
+├── .vimrc ----------------→      vim/vimrc
+└── .config/                      └── config/
+    └── plugins.vim --------→         └── plugins.vim
 ```
+
+Notice that:
+- Only files get symlinked, not directories
+- The directory structure is mirrored in your home directory
+- Files in the same directories from other sources remain untouched
 
 Different commands and their effects:
 
@@ -103,7 +107,7 @@ dloom -d link vim
 # Output:
 # Would create directory: /home/user/.config
 # Would link: /home/user/.vimrc → /home/user/dotfiles/vim/vimrc
-# Would link: /home/user/.config/plugins.vim → /home/user/dotfiles/vim/config/plugins.vim
+# Would link: /home/user/.config/plugins.vim → /home/user/dotfiles/vim/.config/plugins.vim
 ```
 
 ## Configuration (Optional)
