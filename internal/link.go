@@ -1,28 +1,23 @@
-// Package link provides functionality for creating symlinks between source and target directories
-package link
+package internal
 
 import (
 	"errors"
 	"fmt"
-	"github.com/swaranga/dloom/internal"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/swaranga/dloom/internal/config"
 )
 
-// Options holds the options for link operations
-type Options struct {
+type LinkOptions struct {
 	// Config is the application configuration
-	Config *config.Config
+	Config *Config
 
 	// Packages is the list of package names to link
 	Packages []string
 }
 
 // LinkPackages creates symlinks for all specified packages
-func LinkPackages(opts Options, logger *internal.Logger) error {
+func LinkPackages(opts LinkOptions, logger *Logger) error {
 	if len(opts.Packages) == 0 {
 		return errors.New("no packages specified")
 	}
@@ -41,7 +36,7 @@ func LinkPackages(opts Options, logger *internal.Logger) error {
 }
 
 // LinkPackage creates symlinks for a single package
-func LinkPackage(pkgName string, cfg *config.Config, logger *internal.Logger) error {
+func LinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 	// Check if package has conditions and if they match
 	pkgConfig := cfg.GetEffectiveConfig(pkgName, "")
 	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions) {
@@ -115,7 +110,7 @@ func LinkPackage(pkgName string, cfg *config.Config, logger *internal.Logger) er
 }
 
 // linkFile creates a symlink from sourcePath to targetPath
-func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Config, logger *internal.Logger) error {
+func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logger *Logger) error {
 	// Create parent directories if needed
 	targetDir := filepath.Dir(targetPath)
 
@@ -205,14 +200,4 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Confi
 	}
 
 	return nil
-}
-
-// copyFile copies a file from src to dst
-func copyFile(src, dst string) error {
-	sourceData, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(dst, sourceData, 0644)
 }

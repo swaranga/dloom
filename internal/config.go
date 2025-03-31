@@ -1,5 +1,4 @@
-// Package config provides configuration handling for dloom
-package config
+package internal
 
 import (
 	"fmt"

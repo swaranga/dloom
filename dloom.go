@@ -6,10 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/swaranga/dloom/internal"
-	"github.com/swaranga/dloom/internal/config"
-	"github.com/swaranga/dloom/internal/link"
-	"github.com/swaranga/dloom/internal/setup"
-	"github.com/swaranga/dloom/internal/unlink"
 	"os"
 	"path/filepath"
 )
@@ -79,7 +75,7 @@ func main() {
 	}
 
 	// Load config
-	cfg, err := config.LoadConfig(configPath)
+	cfg, err := internal.LoadConfig(configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
 		os.Exit(1)
@@ -140,44 +136,44 @@ func main() {
 }
 
 // handleLink handles the "link" command
-func handleLink(args []string, cfg *config.Config, logger *internal.Logger) error {
+func handleLink(args []string, cfg *internal.Config, logger *internal.Logger) error {
 	if len(args) == 0 {
 		return errors.New("no packages specified for link command")
 	}
 
-	opts := link.Options{
+	opts := internal.LinkOptions{
 		Config:   cfg,
 		Packages: args,
 	}
 
-	return link.LinkPackages(opts, logger)
+	return internal.LinkPackages(opts, logger)
 }
 
 // handleUnlink handles the "unlink" command
-func handleUnlink(args []string, cfg *config.Config, logger *internal.Logger) error {
+func handleUnlink(args []string, cfg *internal.Config, logger *internal.Logger) error {
 	if len(args) == 0 {
 		return errors.New("no packages specified for unlink command\n" +
 			"Use: dloom unlink <package>... or dloom -p <package>[,<package>...] unlink")
 	}
 
-	opts := unlink.Options{
+	opts := internal.UnlinkOptions{
 		Config:   cfg,
 		Packages: args,
 	}
 
-	return unlink.UnlinkPackages(opts, logger)
+	return internal.UnlinkPackages(opts, logger)
 }
 
 // handleSetup handles the "setup" command
-func handleSetup(args []string, cfg *config.Config, logger *internal.Logger) error {
+func handleSetup(args []string, cfg *internal.Config, logger *internal.Logger) error {
 	if len(args) == 0 {
 		return errors.New("no scripts specified for setup command")
 	}
 
-	opts := setup.Options{
+	opts := internal.SetupOptions{
 		Config:  cfg,
 		Scripts: args,
 	}
 
-	return setup.RunScripts(opts, logger)
+	return internal.RunScripts(opts, logger)
 }

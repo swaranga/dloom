@@ -1,28 +1,23 @@
-// Package unlink provides functionality for removing symlinks created by dloom
-package unlink
+package internal
 
 import (
 	"fmt"
-	"github.com/swaranga/dloom/internal"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/swaranga/dloom/internal/config"
 )
 
-// Options holds the options for unlink operations
-type Options struct {
+type UnlinkOptions struct {
 	// Config is the application configuration
-	Config *config.Config
+	Config *Config
 
 	// Packages is the list of package names to unlink
 	Packages []string
 }
 
 // UnlinkPackages removes symlinks for all specified packages
-func UnlinkPackages(opts Options, logger *internal.Logger) error {
+func UnlinkPackages(opts UnlinkOptions, logger *Logger) error {
 	if len(opts.Packages) == 0 {
 		return fmt.Errorf("no packages specified")
 	}
@@ -41,7 +36,7 @@ func UnlinkPackages(opts Options, logger *internal.Logger) error {
 }
 
 // UnlinkPackage removes symlinks for a single package
-func UnlinkPackage(pkgName string, cfg *config.Config, logger *internal.Logger) error {
+func UnlinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 	// Check if package has conditions and if they match
 	pkgConfig := cfg.GetEffectiveConfig(pkgName, "")
 	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions) {
@@ -149,7 +144,7 @@ func UnlinkPackage(pkgName string, cfg *config.Config, logger *internal.Logger) 
 }
 
 // unlinkFile removes a symlink if it points to the expected source
-func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Config, logger *internal.Logger) error {
+func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logger *Logger) error {
 	// Check if target exists
 	fi, err := os.Lstat(targetPath)
 	if err != nil {
@@ -221,27 +216,6 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Con
 	}
 
 	return nil
-}
-
-// copyFile copies a file from src to dst and retains the file permissions.
-func copyFile(src, dst string) error {
-	// Read the source file
-	sourceData, err := os.ReadFile(src)
-	if err != nil {
-		return err
-	}
-
-	// Get the file information to retrieve permissions
-	fileInfo, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-
-	// Extract the permissions from the file information
-	sourcePermissions := fileInfo.Mode().Perm()
-
-	// Write the data to the destination with the same permissions
-	return os.WriteFile(dst, sourceData, sourcePermissions)
 }
 
 // sortByDepth sorts paths by depth (deepest first)

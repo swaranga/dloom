@@ -249,10 +249,10 @@ dloom -d unlink <package>...  # Dry run (preview only)
 dloom/
 ├── dloom.go            # Command-line interface entry point
 ├── internal/           # Internal implementation
-│   ├── config/         # Configuration handling
-│   ├── link/           # Link implementation
-│   ├── unlink/         # Unlink implementation
-│   └── setup/          # System setup implementation
+│   ├── config.go       # Configuration handling
+│   ├── link.go         # Link implementation
+│   ├── unlink.go       # Unlink implementation
+│   └── setup.go        # System setup implementation
 └── examples/           # Sample configurations
 ```
 
