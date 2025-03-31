@@ -13,6 +13,7 @@
 
 # Build directory
 /build/
+bin/
 
 # Go workspace file
 go.work

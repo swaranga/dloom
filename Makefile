@@ -1,7 +1,7 @@
 .PHONY: build clean test run
 
 BINARY_NAME=dloom
-BUILD_DIR=build
+BUILD_DIR=bin
 
 build:
 	@echo "Building $(BINARY_NAME)..."

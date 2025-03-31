@@ -1,0 +1,22 @@
+name: dloom
+base: core22
+summary: Manage symlinks for user dotfiles
+description: dloom is a CLI tool that links and unlinks configuration files (or "dotfiles") to a development machine.
+adopt-info: dloom
+
+confinement: devmode
+
+parts:
+  dloom:
+    plugin: go
+    build-snaps: [go/latest/stable]
+    source: https://github.com/swaranga/dloom
+    source-type: git
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version \
+      "$(git describe --long --tags --always --match=v*.*.* | sed 's/v//')"
+
+apps:
+  dloom:
+    command: dloom
