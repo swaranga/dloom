@@ -64,7 +64,7 @@ Consider this example dotfiles repository:
 ~/dotfiles/
 ├── vim/
 │   ├── vimrc
-│   └── config/
+│   └── .config/
 │       └── plugins.vim
 ├── bash/
 │   ├── bashrc
@@ -80,7 +80,7 @@ When you run `dloom link vim` from the `~/dotfiles` directory, it will:
 
 ```
 ~/.vimrc → ~/dotfiles/vim/vimrc
-~/.config/plugins.vim → ~/dotfiles/vim/config/plugins.vim
+~/.config/plugins.vim → ~/dotfiles/vim/.config/plugins.vim
 ```
 
 Different commands and their effects:
