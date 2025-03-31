@@ -6,19 +6,26 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ## Overview
 
-`dloom` is a modern CLI tool that weaves your configuration files into a cohesive environment across systems. It manages symlinks between your dotfiles repository and your home directory, while also providing system bootstrapping capabilities.
+`dloom` is a CLI tool that links and unlinks your configuration files to your development machine. It manages symlinks between your dotfiles repository and your home directory, while also providing system bootstrapping capabilities. The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by focusing on file-level symlinks rather than directory-level symlinks. This allows for the creation of symlinks for individual files, enabling other applications to add files to the same directories without them being tracked in your dotfiles repository.
 
 ## Features
 
-- **Smart Symlink Management**: Create and manage symlinks for your dotfiles with ease
-    - **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo
-- **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools)
-- **Hierarchical Configuration**: Override settings at global, package, or file level
-- **Backup System**: Automatically back up existing files before replacing them
-- **Dry Run Mode**: Preview changes without modifying your system
-- **Cross-Platform**: Works consistently across macOS and Linux
+- **Symlink Management**: Create and manage symlinks for your dotfiles with ease.
+- **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo.
+  - This is the main difference from GNU Stow. _It does mean that addition of a file to a directory in your dotfiles repository will not automatically create a symlink for it. You will need to run `dloom link` again to create the symlink for the new file._
+- **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools, tool versions).
+- **Hierarchical Configuration**: Override settings at global, package, or file level including support for regex patterns.
+- **Backup System**: Automatically back up existing files before replacing them.
+- **Dry Run Mode**: Preview changes without modifying your system.
+- **Cross-Platform**: Works consistently across macOS and Linux.
+  - Windows support is not planned, but contributions are welcome.
 
 ## Installation
+
+### From Source
+
+**Requirements:**
+- Go 1.18 or later
 
 ```bash
 # Install from source
