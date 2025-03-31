@@ -40,7 +40,10 @@ func init() {
 func main() {
 	// Custom usage message
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "dloom - Dotfile manager and system bootstrapper\n\n")
+		_, err := fmt.Fprintf(os.Stderr, "dloom - Dotfile manager and system bootstrapper\n\n")
+		if err != nil {
+			return
+		}
 		fmt.Fprintf(os.Stderr, "Usage:\n")
 		fmt.Fprintf(os.Stderr, "  dloom [options] command [arguments]\n\n")
 		fmt.Fprintf(os.Stderr, "Commands:\n")

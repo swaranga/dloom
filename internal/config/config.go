@@ -12,73 +12,40 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds the application configuration
 type Config struct {
-	// SourceDir is the base directory for source files, defaults to current directory
-	SourceDir string `yaml:"sourceDir"`
-
-	// TargetDir is the base directory where symlinks will be created, defaults to home directory
-	TargetDir string `yaml:"targetDir"`
-
-	// BackupDir is where existing files will be backed up before linking
-	// If empty, no backups will be created
-	BackupDir string `yaml:"backupDir"`
-
-	// Force determines whether to replace existing files without prompting
-	Force bool `yaml:"force"`
-
-	// Verbose enables detailed output
-	Verbose bool `yaml:"verbose"`
-
-	// DryRun shows what would happen without making any changes
-	DryRun bool `yaml:"dryRun"`
-
-	// Packages holds package-specific configurations
-	Packages map[string]*PackageConfig `yaml:"packages"`
+	SourceDir string                    `yaml:"sourceDir"`
+	TargetDir string                    `yaml:"targetDir"`
+	BackupDir string                    `yaml:"backupDir"`
+	Force     bool                      `yaml:"force"`
+	Verbose   bool                      `yaml:"verbose"`
+	DryRun    bool                      `yaml:"dryRun"`
+	Packages  map[string]*PackageConfig `yaml:"packages"`
 }
 
-// PackageConfig holds configuration for a specific package
 type PackageConfig struct {
-	// SourceDir overrides the global source directory for this package
-	SourceDir string `yaml:"sourceDir"`
-
-	// TargetDir overrides the global target directory for this package
-	TargetDir string `yaml:"targetDir"`
-
-	// BackupDir overrides the global backup directory for this package
-	BackupDir string `yaml:"backupDir"`
-
-	// Force overrides the global force setting for this package
-	Force *bool `yaml:"force"`
-
-	// Conditions for conditional linking of this package
-	Conditions *ConditionSet `yaml:"conditions"`
-
-	// Files holds file-specific configurations within this package
-	Files map[string]*FileConfig `yaml:"files"`
+	SourceDir  string                 `yaml:"sourceDir"`
+	TargetDir  string                 `yaml:"targetDir"`
+	BackupDir  string                 `yaml:"backupDir"`
+	Force      *bool                  `yaml:"force"`
+	Verbose    *bool                  `yaml:"verbose"`
+	DryRun     bool                   `yaml:"dryRun"`
+	Conditions *ConditionSet          `yaml:"conditions"`
+	Files      map[string]*FileConfig `yaml:"files"`
 }
 
-// FileConfig holds configuration for a specific file within a package
 type FileConfig struct {
-	// TargetPath specifies an exact target path for this file
-	TargetPath string `yaml:"targetPath"`
-
-	// Conditions for conditional linking of this file
+	TargetDir  string        `yaml:"targetDir"`
+	BackupDir  string        `yaml:"backupDir"`
+	Force      *bool         `yaml:"force"`
+	Verbose    *bool         `yaml:"verbose"`
+	DryRun     bool          `yaml:"dryRun"`
 	Conditions *ConditionSet `yaml:"conditions"`
 }
 
-// ConditionSet holds conditions for conditional linking
 type ConditionSet struct {
-	// OS conditions (e.g., "linux", "darwin", "windows")
-	OS []string `yaml:"os"`
-
-	// Distro conditions for Linux distributions (e.g., "ubuntu", "arch")
-	Distro []string `yaml:"distro"`
-
-	// Executable conditions check if executables exist in PATH
-	Executable []string `yaml:"executable"`
-
-	// ExecutableVersion checks versions of executables
+	OS                []string          `yaml:"os"`
+	Distro            []string          `yaml:"distro"`
+	Executable        []string          `yaml:"executable"`
 	ExecutableVersion map[string]string `yaml:"executable_version"`
 }
 
@@ -106,8 +73,10 @@ func LoadConfig(configPath string) (*Config, error) {
 	config := DefaultConfig()
 
 	// If no config path specified, look in default locations
+	// First try to find a
 	if configPath == "" {
-		// First, try current directory
+		// First, try current directory and see if a dloom/config.yaml exists
+		// If not, try ~/.config/dloom/config.yaml
 		currentDir, err := os.Getwd()
 		if err == nil {
 			configPath = filepath.Join(currentDir, "dloom", "config.yaml")
@@ -143,108 +112,163 @@ func LoadConfig(configPath string) (*Config, error) {
 	return config, nil
 }
 
-// SaveConfig saves the configuration to the specified file
-func SaveConfig(config *Config, configPath string) error {
-	// If no path specified, use default
-	if configPath == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
-
-		// Ensure directory exists
-		configDir := filepath.Join(homeDir, ".config", "dloom")
-		if err := os.MkdirAll(configDir, 0755); err != nil {
-			return fmt.Errorf("failed to create config directory: %w", err)
-		}
-
-		configPath = filepath.Join(configDir, "config.yaml")
-	}
-
-	// Convert to YAML
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
-	}
-
-	// Write to file
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write config file: %w", err)
-	}
-
-	return nil
-}
-
 // GetSourcePath returns the full path for a source package
 func (c *Config) GetSourcePath(packageName string) string {
+	// Check for package-specific source directory
 	if pkg, exists := c.Packages[packageName]; exists && pkg.SourceDir != "" {
 		return pkg.SourceDir
 	}
+
+	// Fall back to global source directory + package name
 	return filepath.Join(c.SourceDir, packageName)
 }
 
 // GetTargetPath returns the full path for a target in the target directory
 func (c *Config) GetTargetPath(packageName, relativePath string) string {
-	// Check if we have a specific file config with a targetPath
-	if pkg, exists := c.Packages[packageName]; exists {
-		// Try exact file match first
-		if fileConfig, exists := pkg.Files[relativePath]; exists && fileConfig.TargetPath != "" {
-			return fileConfig.TargetPath
-		}
+	// Get the effective configuration for this file
+	effectiveConfig := c.GetEffectiveConfig(packageName, relativePath)
 
-		// Try regex matches
-		for pattern, fileConfig := range pkg.Files {
-			if fileConfig.TargetPath != "" {
-				// Skip if first character is not ^ (indicating it's not meant as a regex)
-				if len(pattern) == 0 || pattern[0] != '^' {
-					continue
-				}
-
-				matched, err := regexp.MatchString(pattern, relativePath)
-				if err == nil && matched {
-					return fileConfig.TargetPath
-				}
-			}
-		}
-
-		// Use package-specific target directory if specified
-		if pkg.TargetDir != "" {
-			return filepath.Join(pkg.TargetDir, relativePath)
-		}
-	}
-
-	// Fall back to global target directory
-	return filepath.Join(c.TargetDir, relativePath)
+	// Construct the target path using the effective target directory
+	return filepath.Join(effectiveConfig.TargetDir, relativePath)
 }
 
 // GetBackupPath returns the path where a file should be backed up
 func (c *Config) GetBackupPath(packageName, relativePath string) string {
-	// Check for package-specific backup directory
-	if pkg, exists := c.Packages[packageName]; exists {
-		// Check if backups are disabled for this package
-		if pkg.BackupDir == "" {
-			return ""
-		}
+	// Get the effective configuration for this file
+	effectiveConfig := c.GetEffectiveConfig(packageName, relativePath)
 
-		// Use package-specific backup directory if specified
-		if pkg.BackupDir != "" {
-			return filepath.Join(pkg.BackupDir, relativePath)
-		}
-	}
-
-	// Fall back to global backup directory
-	if c.BackupDir == "" {
+	// If backup directory is empty, backups are disabled
+	if effectiveConfig.BackupDir == "" {
 		return ""
 	}
-	return filepath.Join(c.BackupDir, relativePath)
+
+	// Otherwise, construct the backup path
+	return filepath.Join(effectiveConfig.BackupDir, relativePath)
 }
 
-// ShouldForce returns whether to force overwriting for a specific package
-func (c *Config) ShouldForce(packageName string) bool {
-	if pkg, exists := c.Packages[packageName]; exists && pkg.Force != nil {
-		return *pkg.Force
+// ShouldBeVerbose returns whether verbose output should be enabled for a specific file
+func (c *Config) ShouldBeVerbose(packageName, relativePath string) bool {
+	// Get the effective configuration for this file
+	effectiveConfig := c.GetEffectiveConfig(packageName, relativePath)
+
+	// The Verbose field should never be nil in the effective config
+	// since it's initialized with the global value
+	return *effectiveConfig.Verbose
+}
+
+// IsDryRun returns whether dry run mode is enabled for a specific file
+func (c *Config) IsDryRun(packageName, relativePath string) bool {
+	// Get the effective configuration for this file
+	effectiveConfig := c.GetEffectiveConfig(packageName, relativePath)
+
+	// Return the effective dry run setting
+	return effectiveConfig.DryRun
+}
+
+// ShouldForce returns whether force mode is enabled for a specific file
+func (c *Config) ShouldForce(packageName, relativePath string) bool {
+	// Get the effective configuration for this file
+	effectiveConfig := c.GetEffectiveConfig(packageName, relativePath)
+
+	// The Force field should never be nil in the effective config
+	// since it's initialized with the global value
+	return *effectiveConfig.Force
+}
+
+// GetEffectiveConfig returns the effective configuration for a specific file
+// by merging global, package-level, and file-specific settings
+func (c *Config) GetEffectiveConfig(packageName, relativePath string) *FileConfig {
+	// Start with default settings derived from global config
+	effectiveConfig := &FileConfig{
+		TargetDir:  c.TargetDir,
+		BackupDir:  c.BackupDir,
+		Force:      &c.Force,
+		Verbose:    &c.Verbose,
+		DryRun:     c.DryRun,
+		Conditions: nil, // No conditions at global level
 	}
-	return c.Force
+
+	// Apply package-level settings if they exist
+	pkg, pkgExists := c.Packages[packageName]
+	if pkgExists {
+		// Override with package settings where specified
+		if pkg.TargetDir != "" {
+			effectiveConfig.TargetDir = pkg.TargetDir
+		}
+
+		if pkg.BackupDir != "" {
+			effectiveConfig.BackupDir = pkg.BackupDir
+		}
+
+		if pkg.Force != nil {
+			effectiveConfig.Force = pkg.Force
+		}
+
+		if pkg.Verbose != nil {
+			effectiveConfig.Verbose = pkg.Verbose
+		}
+
+		if pkg.DryRun {
+			effectiveConfig.DryRun = pkg.DryRun
+		}
+
+		// Apply package conditions
+		effectiveConfig.Conditions = pkg.Conditions
+
+		// Check for file-specific settings
+		var fileConfig *FileConfig
+
+		// First, try exact file match
+		if fc, exists := pkg.Files[relativePath]; exists {
+			fileConfig = fc
+		} else {
+			// Try regex matches
+			for pattern, fc := range pkg.Files {
+				// Only process entries that start with "regex:"
+				if strings.HasPrefix(pattern, "regex:") {
+					// Extract the actual regex pattern
+					regexPattern := strings.TrimPrefix(pattern, "regex:")
+
+					matched, err := regexp.MatchString(regexPattern, relativePath)
+					if err == nil && matched {
+						fileConfig = fc
+						break
+					}
+				}
+			}
+		}
+
+		// Apply file-specific settings if found
+		if fileConfig != nil {
+			if fileConfig.TargetDir != "" {
+				effectiveConfig.TargetDir = fileConfig.TargetDir
+			}
+
+			if fileConfig.BackupDir != "" {
+				effectiveConfig.BackupDir = fileConfig.BackupDir
+			}
+
+			if fileConfig.Force != nil {
+				effectiveConfig.Force = fileConfig.Force
+			}
+
+			if fileConfig.Verbose != nil {
+				effectiveConfig.Verbose = fileConfig.Verbose
+			}
+
+			if fileConfig.DryRun {
+				effectiveConfig.DryRun = fileConfig.DryRun
+			}
+
+			// For conditions, file conditions completely override package conditions
+			// rather than merging them
+			if fileConfig.Conditions != nil {
+				effectiveConfig.Conditions = fileConfig.Conditions
+			}
+		}
+	}
+
+	return effectiveConfig
 }
 
 // MatchesConditions checks if the current environment matches the given conditions

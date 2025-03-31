@@ -41,6 +41,15 @@ func UnlinkPackages(opts Options) error {
 
 // UnlinkPackage removes symlinks for a single package
 func UnlinkPackage(pkgName string, cfg *config.Config) error {
+	// Check if package has conditions and if they match
+	pkgConfig := cfg.GetEffectiveConfig(pkgName, "")
+	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions) {
+		if cfg.ShouldBeVerbose(pkgName, "") {
+			fmt.Printf("Skipping package %s: conditions not met\n", pkgName)
+		}
+		return nil
+	}
+
 	// Get the absolute path to the source package
 	pkgDir := cfg.GetSourcePath(pkgName)
 
@@ -74,8 +83,17 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 			return err
 		}
 
+		// Check file-specific conditions
+		fileConfig := cfg.GetEffectiveConfig(pkgName, relPath)
+		if fileConfig.Conditions != nil && !cfg.MatchesConditions(fileConfig.Conditions) {
+			if cfg.ShouldBeVerbose(pkgName, relPath) {
+				fmt.Printf("Skipping file %s: conditions not met\n", relPath)
+			}
+			return nil
+		}
+
 		// Construct target path
-		targetPath := cfg.GetTargetPath(relPath)
+		targetPath := cfg.GetTargetPath(pkgName, relPath)
 
 		// If it's a directory, add to the map of directories to check later
 		if info.IsDir() {
@@ -84,7 +102,7 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 		}
 
 		// It's a file, handle unlinking
-		return unlinkFile(sourcePath, targetPath, relPath, cfg)
+		return unlinkFile(sourcePath, targetPath, relPath, pkgName, cfg)
 	})
 
 	if err != nil {
@@ -92,7 +110,7 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 	}
 
 	// Clean up empty directories, starting from the deepest ones
-	if !cfg.DryRun {
+	if !cfg.IsDryRun(pkgName, "") {
 		var dirs []string
 		for dir := range emptyDirs {
 			dirs = append(dirs, dir)
@@ -110,15 +128,15 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 			}
 
 			if len(entries) == 0 {
-				if cfg.DryRun {
+				if cfg.IsDryRun(pkgName, "") {
 					fmt.Printf("Would remove empty directory: %s\n", dir)
 				} else {
 					if err := os.Remove(dir); err != nil {
 						// Non-critical error, just log and continue
-						if cfg.Verbose {
+						if cfg.ShouldBeVerbose(pkgName, "") {
 							fmt.Printf("Failed to remove directory %s: %v\n", dir, err)
 						}
-					} else if cfg.Verbose {
+					} else if cfg.ShouldBeVerbose(pkgName, "") {
 						fmt.Printf("Removed empty directory: %s\n", dir)
 					}
 				}
@@ -130,13 +148,13 @@ func UnlinkPackage(pkgName string, cfg *config.Config) error {
 }
 
 // unlinkFile removes a symlink if it points to the expected source
-func unlinkFile(sourcePath, targetPath, relPath string, cfg *config.Config) error {
+func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *config.Config) error {
 	// Check if target exists
 	fi, err := os.Lstat(targetPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Target doesn't exist, nothing to unlink
-			if cfg.Verbose {
+			if cfg.ShouldBeVerbose(pkgName, relPath) {
 				fmt.Printf("No symlink found at %s\n", targetPath)
 			}
 			return nil
@@ -147,7 +165,7 @@ func unlinkFile(sourcePath, targetPath, relPath string, cfg *config.Config) erro
 	// Check if it's a symlink
 	if fi.Mode()&os.ModeSymlink == 0 {
 		// Not a symlink, leave it alone
-		if cfg.Verbose {
+		if cfg.ShouldBeVerbose(pkgName, relPath) {
 			fmt.Printf("Not a symlink: %s\n", targetPath)
 		}
 		return nil
@@ -161,28 +179,27 @@ func unlinkFile(sourcePath, targetPath, relPath string, cfg *config.Config) erro
 
 	// Only remove if it points to our source file
 	if linkDest == sourcePath {
-		if cfg.DryRun {
+		if cfg.IsDryRun(pkgName, relPath) {
 			fmt.Printf("Would remove symlink: %s -> %s\n", targetPath, sourcePath)
 		} else {
 			if err := os.Remove(targetPath); err != nil {
 				return fmt.Errorf("failed to remove symlink %s: %w", targetPath, err)
 			}
 
-			if cfg.Verbose {
+			if cfg.ShouldBeVerbose(pkgName, relPath) {
 				fmt.Printf("Removed symlink: %s\n", targetPath)
 			}
 		}
-	} else if cfg.Verbose {
+	} else if cfg.ShouldBeVerbose(pkgName, relPath) {
 		fmt.Printf("Symlink points elsewhere, not removing: %s -> %s\n", targetPath, linkDest)
 	}
 
 	// Restore from backup if available
-	if cfg.BackupDir != "" {
-		backupPath := cfg.GetBackupPath(relPath)
-
+	backupPath := cfg.GetBackupPath(pkgName, relPath)
+	if backupPath != "" {
 		// Check if backup exists
 		if _, err := os.Stat(backupPath); err == nil {
-			if cfg.DryRun {
+			if cfg.IsDryRun(pkgName, relPath) {
 				fmt.Printf("Would restore from backup: %s -> %s\n", backupPath, targetPath)
 			} else {
 				// Copy backup back to target
@@ -190,7 +207,7 @@ func unlinkFile(sourcePath, targetPath, relPath string, cfg *config.Config) erro
 					return fmt.Errorf("failed to restore from backup %s: %w", backupPath, err)
 				}
 
-				if cfg.Verbose {
+				if cfg.ShouldBeVerbose(pkgName, relPath) {
 					fmt.Printf("Restored from backup: %s -> %s\n", backupPath, targetPath)
 				}
 
