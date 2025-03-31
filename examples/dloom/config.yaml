@@ -2,12 +2,12 @@
 version: 0.0.1
 
 # Global configuration
-sourceDir: "/home/username/dotfiles"  # Base directory for dotfiles
-targetDir: "/home/username"           # Where symlinks will be created
+sourceDir: "/home/username/dotfiles"        # Base directory for dotfiles
+targetDir: "/home/username"                 # Where symlinks will be created
 backupDir: "/home/username/.dloom/backups"  # Where existing files are backed up
-force: false                          # Don't replace files without asking
-verbose: true                         # Show detailed output
-dryRun: false                         # Actually make changes
+force: false                                # Don't replace files without asking
+verbose: true                               # Show detailed output
+dryRun: false                               # Actually make changes
 
 # Package-specific configurations
 packages:
