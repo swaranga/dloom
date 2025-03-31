@@ -19,7 +19,7 @@ jobs:
           go-version: '1.24.1'
 
       - name: Build the project
-        run: go build -o build/dloom ./cmd/dloom
+        run: go build -o build/dloom
 
       - name: Verify build output
         run: ls -l build/dloom

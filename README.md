@@ -36,7 +36,7 @@ go install github.com/swaranga/dloom/cmd/dloom@latest
 # Or clone and build
 git clone https://github.com/swaranga/dloom.git
 cd dloom
-go build -o build/dloom ./cmd/dloom
+go build -o build/dloom
 ```
 
 ## Quick Start
@@ -222,7 +222,7 @@ dloom -d unlink <package>...  # Dry run (preview only)
 
 ```
 dloom/
-├── cmd/dloom/          # Command-line interface
+├── dloom.go            # Command-line interface entry point
 ├── internal/           # Internal implementation
 │   ├── config/         # Configuration handling
 │   ├── link/           # Link implementation

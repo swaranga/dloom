@@ -6,7 +6,7 @@ BUILD_DIR=build
 build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
-	@go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/dloom
+	@go build -o $(BUILD_DIR)/$(BINARY_NAME)
 
 clean:
 	@echo "Cleaning..."

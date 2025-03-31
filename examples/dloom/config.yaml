@@ -1,5 +1,5 @@
 # dloom configuration file
-version: 0.1.0
+version: 0.0.1
 
 # Global configuration
 sourceDir: "/home/username/dotfiles"  # Base directory for dotfiles
