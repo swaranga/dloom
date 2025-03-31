@@ -14,8 +14,8 @@ packages:
   # Vim configuration
   vim:
     targetDir: "/home/username/.config/vim"  # Override target for this package
-    conditions:                      # Only link if these conditions are met
-      os:                            # OS conditions (OR logic within this group)
+    conditions:                              # Only link if these conditions are met
+      os:                                    # OS conditions (OR logic within this group)
         - "linux"
         - "darwin"
       executable:                    # Required executables (AND logic with other groups)
