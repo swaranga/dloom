@@ -10,48 +10,81 @@ import (
 	"github.com/swaranga/dloom/internal/unlink"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Command-line flags
 var (
-	configPath string
-	force      bool
-	verbose    bool
-	dryRun     bool
-	sourceDir  string
-	targetDir  string
+	configPath  string
+	force       bool
+	verbose     bool
+	dryRun      bool
+	sourceDir   string
+	targetDir   string
+	packageArgs stringSliceFlag // Custom type to handle multiple package args
 )
+
+// stringSliceFlag is a custom flag type that allows for multiple values
+type stringSliceFlag []string
+
+func (s *stringSliceFlag) String() string {
+	return strings.Join(*s, ",")
+}
+
+func (s *stringSliceFlag) Set(value string) error {
+	// Handle comma-separated values
+	if strings.Contains(value, ",") {
+		*s = append(*s, strings.Split(value, ",")...)
+	} else {
+		*s = append(*s, value)
+	}
+	return nil
+}
 
 func init() {
 	// Define command-line flags
 	flag.StringVar(&configPath, "config", "", "Path to config file")
-	flag.BoolVar(&force, "force", false, "Force overwriting existing files")
-	flag.BoolVar(&verbose, "verbose", false, "Enable verbose output")
-	flag.BoolVar(&dryRun, "dry-run", false, "Show what would be done without making changes")
-	flag.StringVar(&sourceDir, "source", "", "Source directory (defaults to current directory)")
-	flag.StringVar(&targetDir, "target", "", "Target directory (defaults to home directory)")
+	flag.StringVar(&configPath, "c", "", "Path to config file (shorthand)")
 
-	// Add short-form flags
+	flag.BoolVar(&force, "force", false, "Force overwriting existing files")
 	flag.BoolVar(&force, "f", false, "Force overwriting existing files (shorthand)")
+
+	flag.BoolVar(&verbose, "verbose", false, "Enable verbose output")
 	flag.BoolVar(&verbose, "v", false, "Enable verbose output (shorthand)")
+
+	flag.BoolVar(&dryRun, "dry-run", false, "Show what would be done without making changes")
+	flag.BoolVar(&dryRun, "d", false, "Show what would be done without making changes (shorthand)")
 	flag.BoolVar(&dryRun, "n", false, "Show what would be done without making changes (shorthand)")
+
+	flag.StringVar(&sourceDir, "source", "", "Source directory (defaults to current directory)")
+	flag.StringVar(&sourceDir, "src", "", "Source directory (shorthand)")
+	flag.StringVar(&sourceDir, "s", "", "Source directory (shorthand)")
+
+	flag.StringVar(&targetDir, "target", "", "Target directory (defaults to home directory)")
+	flag.StringVar(&targetDir, "dest", "", "Target directory (alias)")
+	flag.StringVar(&targetDir, "t", "", "Target directory (shorthand)")
+
+	// Add package flag that can be specified multiple times
+	flag.Var(&packageArgs, "package", "Package name (can be used multiple times or as comma-separated list)")
+	flag.Var(&packageArgs, "p", "Package name (shorthand)")
 }
 
 func main() {
 	// Custom usage message
 	flag.Usage = func() {
-		_, err := fmt.Fprintf(os.Stderr, "dloom - Dotfile manager and system bootstrapper\n\n")
-		if err != nil {
-			return
-		}
+		fmt.Fprintf(os.Stderr, "dloom - Dotfile manager and system bootstrapper\n\n")
 		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  dloom [options] command [arguments]\n\n")
+		fmt.Fprintf(os.Stderr, "  dloom [options] <command> [packages...]\n\n")
 		fmt.Fprintf(os.Stderr, "Commands:\n")
-		fmt.Fprintf(os.Stderr, "  link <package>...    Create symlinks for specified packages\n")
-		fmt.Fprintf(os.Stderr, "  unlink <package>...  Remove symlinks for specified packages\n")
-		fmt.Fprintf(os.Stderr, "  setup <script>...    Run specified setup scripts\n\n")
+		fmt.Fprintf(os.Stderr, "  link      Create symlinks for specified packages\n")
+		fmt.Fprintf(os.Stderr, "  unlink    Remove symlinks for specified packages\n")
+		fmt.Fprintf(os.Stderr, "  setup     Run specified setup scripts\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nExamples:\n")
+		fmt.Fprintf(os.Stderr, "  dloom link vim bash        # Link vim and bash packages\n")
+		fmt.Fprintf(os.Stderr, "  dloom -p vim,bash link     # Same as above using -p flag\n")
+		fmt.Fprintf(os.Stderr, "  dloom -v -d link vim       # Verbose dry-run for vim package\n")
 	}
 
 	// Parse flags
@@ -100,6 +133,12 @@ func main() {
 	command := args[0]
 	cmdArgs := args[1:]
 
+	// If packages were specified via -p/--package flags, use those instead of command arguments
+	// but only for link and unlink commands
+	if len(packageArgs) > 0 && (command == "link" || command == "unlink") {
+		cmdArgs = packageArgs
+	}
+
 	var cmdErr error
 	switch command {
 	case "link":
@@ -123,7 +162,8 @@ func main() {
 // handleLink handles the "link" command
 func handleLink(args []string, cfg *config.Config) error {
 	if len(args) == 0 {
-		return fmt.Errorf("no packages specified for link command")
+		return fmt.Errorf("no packages specified for link command\n" +
+			"Use: dloom link <package>... or dloom -p <package>[,<package>...] link")
 	}
 
 	opts := link.Options{
@@ -137,7 +177,8 @@ func handleLink(args []string, cfg *config.Config) error {
 // handleUnlink handles the "unlink" command
 func handleUnlink(args []string, cfg *config.Config) error {
 	if len(args) == 0 {
-		return fmt.Errorf("no packages specified for unlink command")
+		return fmt.Errorf("no packages specified for unlink command\n" +
+			"Use: dloom unlink <package>... or dloom -p <package>[,<package>...] unlink")
 	}
 
 	opts := unlink.Options{
