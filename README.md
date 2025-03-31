@@ -2,6 +2,8 @@
 
 A lightweight, flexible dotfile manager and system bootstrapper for macOS and Linux.
 
+![Build Status](https://github.com/swaranga/dloom/actions/workflows/build.yml/badge.svg)
+![GitHub Release](https://img.shields.io/github/v/release/swaranga/dloom?include_prereleases)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## Overview
