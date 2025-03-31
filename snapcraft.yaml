@@ -26,6 +26,8 @@ parts:
       - make
     override-build: |
       make build
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cp bin/dloom $SNAPCRAFT_PART_INSTALL/bin/dloom
 
 apps:
   dloom:
