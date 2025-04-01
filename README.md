@@ -10,7 +10,7 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ## Overview
 
-`dloom` is a CLI tool that links and unlinks configuration files (or "dotfiles") to a development machine. It manages symlinks between a dotfiles repository and the machine's home directory (by default; overridable). The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by creating symlinks for individual files instead of directories. This enables other applications to add files to the same directories without them needing to be tracked in your dotfiles repository.
+**dloom** (pronounced *dee-loom*) is a CLI (command-line interface) tool that _links_ and _unlinks_ configuration files (or _dotfiles_) in a development machine. It manages symlinks between a dotfiles repository (or any source directory) and the machine's target directory (_home_ directory by default; overridable). The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by creating symlinks for individual files instead of directories. This enables other applications to add files to the same parent directories without them needing to be tracked in the dotfiles repository.
 
 ## Features
 
