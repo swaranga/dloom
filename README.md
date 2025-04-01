@@ -10,17 +10,17 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ## Overview
 
-`dloom` is a CLI tool that links and unlinks configuration files (or "dotfiles") to a development machine. It manages symlinks between a dotfiles repository and the machine's home directory (by default; overridable). The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by focusing on **file-level symlinks** rather than directory-level symlinks. This allows for the creation of symlinks for individual files, enabling other applications to add files to the same directories without them being tracked in your dotfiles repository.
+`dloom` is a CLI tool that links and unlinks configuration files (or "dotfiles") to a development machine. It manages symlinks between a dotfiles repository and the machine's home directory (by default; overridable). The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by creating symlinks for individual files instead of directories. This enables other applications to add files to the same directories without them needing to be tracked in your dotfiles repository.
 
 ## Features
 
-- **Symlink Management**: Create and manage symlinks for your dotfiles with ease.
-- **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo (e.g., `~/.ssh/`).
-  - This is the main difference from GNU Stow. _It does mean that addition of a file to a directory in your dotfiles repository will not automatically create a symlink for it. You will need to run `dloom link` again to create the symlink for the new file._
-  - Additionally, links for files can have different names in the target directory. This allows us you to have separate dotfiles for different environments (e.g., macOS vs linux) without needing to maintain separate branches or repositories but still have the same name for the symlinked file.
+- **Symlink Management**: Easily create and manage symlinks for your dotfiles.
+- **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repository (e.g., `~/.ssh/`).
+  - This is the main difference from GNU Stow. _It means that the addition of a file to a directory in your dotfiles repository will not automatically create a symlink for it. You will need to run `dloom link` again to create the symlink for the new file._
+  - Additionally, links for files can have different names in the target directory. This allows users to have separate dotfiles for different environments (e.g., macOS vs. Linux) without needing to maintain separate branches or repositories, while still having the same name for the symlinked file.
 - **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools, tool versions).
-- **Customize setup (optional)**: Allows customizing how the system is setup using a configuration file. Override settings at global, package, or file level including support for regex patterns.
-- **Backup System**: Automatically back up existing files before replacing them.
+- **Customize Setup (Optional)**: Allows customization of how the system is set up using a configuration file. Override settings at the global, package, or file level, including support for regex patterns.
+- **Backup System**: Automatically backs up existing files before replacing them.
 - **Dry Run Mode**: Preview changes without modifying your system.
 - **Cross-Platform**: Works consistently across macOS and Linux.
   - Windows support has not been tested, but contributions are welcome.
@@ -29,7 +29,7 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ### Pre-built Binaries
 
-`dloom` is a single cross-platform binary and can be installed on macOS and Linux. You can download the latest release from the [GitHub releases](https://github.com/swaranga/dloom/releases/) page. Simply download the binary, make it executable and place it in your `PATH`.
+`dloom` is a single cross-platform binary and can be installed on macOS and Linux. You can download the latest release from the [GitHub releases](https://github.com/swaranga/dloom/releases/) page. Simply download the `dloom` binary, and place it in your `PATH`.
 
 ### From Source
 
@@ -130,7 +130,11 @@ To remove the symlinks created by `dloom`, use the `unlink` command:
 dloom unlink vim
 ```
 
-Unlink will only remove links if they were created by `dloom`, i.e - if the links are pointing to files in the source directory. Any extra files in the target directory will remain untouched. If `dloom` finds any backups for files that were unlinked, it will restore them. Finally, if the target directory becomes empty after unlinking (and if no backups were found), the directory will be removed. 
+Unlink will only remove links if they were created by `dloom`, i.e - if the links are pointing to files in the source (usually the dotfiles) directory. Any extra files in the target directory will remain untouched. If `dloom` finds any backups for files that were unlinked, it will restore them. Finally, if the target directory becomes empty after unlinking (and if no backups were found), the directory will be removed. 
+
+### Backup System
+
+`dloom` automatically backs up existing files before replacing them. The backup files are stored in the `backup_dir` specified in the configuration file (default: `~/.dloom/backups`). If a file already exists at the target location, it will be backed up before creating the symlink. During the unlinking process, if a backup exists, it will be restored.
 
 ### Dry Run
 To preview what would happen without making any changes, use the `-d` or `--dry-run` option:
@@ -143,29 +147,34 @@ This will show you what files would be linked or unlinked without actually perfo
 
 ## Configuration (Optional)
 
-`dloom` can be (optionally) configured via a YAML file. By default, it looks for:
+`dloom` can be customized using a configuration file to override default settings. This allows you to specify different source and target directories, enable verbose output, force overwriting existing files, and set up conditional linking based on various criteria. Some example use cases include:
+- If you have different `waybar` config files for `sway` and `hyprland`, you can use `dloom` to link the correct one based on the presence of the executable (`hyprland` or `sway`).
+- If you have different dotfiles for different operating systems, you can use `dloom` to link the correct one based on the OS. For instance, a different `~/.zshrc` for macOS and Linux.
+  - For this case, you can have a `.zshrc_linux` and a `~/.zshrc.mac` file in your dotfiles repository. Then, you can use `dloom` to link the correct one based on the OS. The symlink can be configured to be the standard `~/.zshrc` file, but the actual file in the dotfiles repository is the operating system specific one. This way, you can have different configurations for different operating systems without needing to maintain separate branches or repositories.
+
+Configuration is done via a YAML file, which allows hierarchical overrides from global, package-specific to individual file-specific settings. By default, `dloom` looks for a config.yaml file in the following directories in order of precedence:
 1. `./dloom/config.yaml` (in current directory)
 2. `~/.config/dloom/config.yaml` (in user config directory)
 
-Or specify a custom location with `-c path/to/config.yaml`. For easiest configuration, create a `dloom/config.yaml` file in the root of your dotfiles repository.
+You can also specify a custom location with the `-c path/to/config.yaml` option. For easiest configuration, create a `dloom/config.yaml` file in the root of your dotfiles repository.
 
 ### Basic Configuration
 
 ```yaml
 # Global settings
-source_dir: "~/dotfiles"     # Where your dotfiles are stored; default is current directory
-target_dir: "~"              # Where to create symlinks; default is home directory
+source_dir: "~/dotfiles"        # Where your dotfiles are stored; default is current directory
+target_dir: "~"                 # Where to create symlinks; default is home directory
 backup_dir: "~/.dloom/backups"  # Where to back up existing files; default is ~/.dloom/backups
-verbose: true               # Enable detailed output; default is false
-force: false                # Don't overwrite without asking; default is false
-dry_run: false               # Actually make changes; default is false
+verbose: true                   # Enable detailed output; default is false
+force: false                    # Don't overwrite without asking; default is false
+dry_run: false                  # Actually make changes; default is false
 
 # Package-specific settings
 link_overrides:
-  vim:
-    target_dir: "~/.config/nvim"  # Override target for vim package
-    conditions:
-      os:
+  vim: # Package name; just a name to group some related files together; does not need to be an executable in the system; dloom expects a directory with the same name under which the files to be linked will be found
+    target_dir: "~/.config/nvim"  # Override target for all files under the vim package
+    conditions: # Conditions for linking; multiple conditions can be specified and are AND-ed together
+      os: # Operating system; multiple OS can be specified; multiple conditions are OR-ed together
         - "linux"
         - "darwin"  # Only link on Linux or macOS
 ```
@@ -188,7 +197,7 @@ link_overrides:
             - "darwin"  # Only link on macOS
       
       # Version-specific configurations
-      "tmux.new.conf":
+      "tmux.new.conf": # File name; must match the exact name in the source directory
         target_name: "tmux.conf"  # Creates the link with a different name
         conditions:
           executable_version:
@@ -197,7 +206,7 @@ link_overrides:
 
 ### Full Configuration
 
-For a complete example, check the `examples/` directory in the repository. It contains various configurations for different setups.
+For a more complete example, check the `examples/` directory in the repository. It contains various configurations for different setups.
 
 ## Usage
 
