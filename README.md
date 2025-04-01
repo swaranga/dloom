@@ -38,7 +38,7 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ```bash
 # Install from source
-go install github.com/swaranga/dloom/cmd/dloom@latest
+go install github.com/swaranga/dloom
 
 # Or clone and build
 git clone https://github.com/swaranga/dloom.git

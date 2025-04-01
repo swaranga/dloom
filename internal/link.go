@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+const permissions = 0750
 type LinkOptions struct {
 	// Config is the application configuration
 	Config *Config
@@ -101,7 +102,7 @@ func LinkPackage(pkgName string, cfg *Config, logger *logging.Logger) error {
 				return nil
 			}
 
-			if err := os.MkdirAll(targetPath, 0755); err != nil {
+			if err := os.MkdirAll(targetPath, permissions); err != nil {
 				return fmt.Errorf("failed to create directory %s: %w", targetPath, err)
 			}
 
@@ -122,7 +123,7 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logg
 	targetDir := filepath.Dir(targetPath)
 
 	if !cfg.IsDryRun(pkgName, relPath) {
-		if err := os.MkdirAll(targetDir, 0755); err != nil {
+		if err := os.MkdirAll(targetDir, permissions); err != nil {
 			return fmt.Errorf("failed to create parent directory %s: %w", targetDir, err)
 		}
 	}
@@ -172,7 +173,7 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logg
 			if cfg.IsDryRun(pkgName, relPath) {
 				logger.LogDryRun("Would backup %s to %s", targetPath, backupPath)
 			} else {
-				if err := os.MkdirAll(backupDir, 0755); err != nil {
+				if err := os.MkdirAll(backupDir, permissions); err != nil {
 					return fmt.Errorf("failed to create backup directory %s: %w", backupDir, err)
 				}
 
