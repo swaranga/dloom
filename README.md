@@ -308,9 +308,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Inspired by [GNU Stow](https://www.gnu.org/software/stow/) and other dotfile managers
-- Built with Go
+- Inspired by [GNU Stow](https://www.gnu.org/software/stow/) and other dotfile managers.
+- Built with Go.
 
 ---
 
-*dloom - Weave your development environment*
+*dloom - Weave your development environment.*
