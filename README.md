@@ -75,14 +75,9 @@ Consider this example dotfiles repository:
 ```
 ~/dotfiles/
 ├── vim/
-│   ├── .vimrc
-│   └── .config/
-│       └── plugins.vim
-├── bash/
-│   ├── .bashrc
-│   └── .bash_profile
-└── tmux/
-    └── tmux.conf
+    ├── .vimrc
+    └── .config/
+        └── plugins.vim
 ```
 
 When you run `dloom link vim`, it will create:
@@ -95,9 +90,9 @@ When you run `dloom link vim`, it will create:
 ```
 
 Notice that:
-- Only files get symlinked, not directories
-- The directory structure is mirrored in your home directory
-- Files in the same directories from other sources remain untouched
+- Only files get symlinked, not directories.
+- The directory structure is mirrored in the target; i.e. the home (`~`) directory.
+- Files in the same target directories from other sources remain untouched.
 
 Different commands and their effects:
 
@@ -166,20 +161,20 @@ Sample output:
 [DRY RUN]: Would link: /home/user_name/.config/waybar/style.css -> /home/user_name/dotfiles/waybar/.config/waybar/style.css
 ```
 
-This will show you what files would be linked or unlinked without actually performing the operation.
+This will show what files would be linked or unlinked without actually performing the operation.
 
 ## Configuration (Optional)
 
-`dloom` can be customized using a configuration file to override default settings. This allows you to specify different source and target directories, enable verbose output, force overwriting existing files, and set up conditional linking based on various criteria. Some example use cases include:
-- If you have different `waybar` config files for `sway` and `hyprland`, you can use `dloom` to link the correct one based on the presence of the executable (`hyprland` or `sway`).
+`dloom` can be customized using a configuration file to override default settings. This allows users to specify different source and target directories, enable verbose output, force overwriting existing files, and set up conditional linking based on various criteria. Some example use cases include:
+- If you have different `waybar` config files for `sway` and `hyprland`, you can use `dloom` to link the correct one based on the presence of the executable (`hyprland` or `sway`) on the machine.
 - If you have different dotfiles for different operating systems, you can use `dloom` to link the correct one based on the OS. For instance, a different `~/.zshrc` for macOS and Linux.
-  - For this case, you can have a `.zshrc_linux` and a `~/.zshrc.mac` file in your dotfiles repository. Then, you can use `dloom` to link the correct one based on the OS. The symlink can be configured to be the standard `~/.zshrc` file, but the actual file in the dotfiles repository is the operating system specific one. This way, you can have different configurations for different operating systems without needing to maintain separate branches or repositories.
+  - For example, you can have a `.zshrc_linux` and a `~/.zshrc_mac` file in your dotfiles repository. Then, you can use `dloom` to link to the correct one based on the OS. The symlink can be configured to be the standard `~/.zshrc` file, but the actual file in the dotfiles repository is the operating system specific one. This way, you can have different configuration files for different operating systems without needing to maintain separate branches or repositories.
 
-Configuration is done via a YAML file, which allows hierarchical overrides from global, package-specific to individual file-specific settings. By default, `dloom` looks for a config.yaml file in the following directories in order of precedence:
-1. `./dloom/config.yaml` (in current directory)
+Configuration is done via a YAML file, which allows hierarchical overrides from global, package-specific to individual file-specific settings. By default, `dloom` looks for a `config.yaml` file in the following directories in order of precedence:
+1. `./dloom/config.yaml` (in current working directory)
 2. `~/.config/dloom/config.yaml` (in user config directory)
 
-You can also specify a custom location with the `-c path/to/config.yaml` option. For easiest configuration, create a `dloom/config.yaml` file in the root of your dotfiles repository.
+You can also specify a custom config file location with the `-c path/to/config.yaml` option. For easiest configuration, create a `dloom/config.yaml` file in the root of your dotfiles repository. You can also use `dloom` itself to link to this file in your repository from `~/.config/dloom/config.yaml` so that you can run `dloom` from anywhere.
 
 ### Basic Configuration
 
@@ -194,7 +189,10 @@ dry_run: false                  # Actually make changes; default is false
 
 # Package-specific settings
 link_overrides:
-  vim: # Package name; just a name to group some related files together; does not need to be an executable in the system; dloom expects a directory with the same name under which the files to be linked will be found
+  # The package name; this is just a name to group some related files together; 
+  # This does not need to be an executable in the system; 
+  # dloom expects a directory with the same name in the source_dir, under which the files to be linked will be found
+  vim:
     target_dir: "~/.config/nvim"  # Override target for all files under the vim package
     conditions: # Conditions for linking; multiple conditions can be specified and are AND-ed together
       os: # Operating system; multiple OS can be specified; multiple conditions are OR-ed together
@@ -211,8 +209,10 @@ link_overrides:
       executable:
         - "tmux"  # Only link if tmux is installed
     
-    # File-specific configuration overrides (optional; overrides package settings and only needed if defaults are not sufficient)
-    # File name matching attempts to match the exact file name first before trying regex matching regardless of the declaration order of the overrides
+    # File-specific configuration overrides (optional)
+    # This overrides package settings and only needed if defaults are not sufficient
+    # File name matching attempts to match the exact file name first 
+    # before trying regex matching regardless of the declaration order of the overrides
     file_overrides:
       # File with regex pattern matching
       "regex:^tmux.*\.local$":
@@ -230,7 +230,7 @@ link_overrides:
 
 ### Full Configuration
 
-For a more complete example, check the `examples/` directory in the repository. It contains various configurations for different setups.
+For a more complete example, check the [examples](https://github.com/swaranga/dloom/tree/main/examples/dloom) directory in the repository. It contains various configurations for different setups.
 
 ## Usage
 
