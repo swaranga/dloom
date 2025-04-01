@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/swaranga/dloom/internal/logging"
 )
 
 // SetupOptions holds the options for setup operations
@@ -14,7 +15,7 @@ type SetupOptions struct {
 }
 
 // RunScripts runs the specified setup scripts
-func RunScripts(opts SetupOptions, logger *Logger) error {
+func RunScripts(opts SetupOptions, logger *logging.Logger) error {
 	// Placeholder implementation
 	fmt.Println("Setup functionality not implemented yet")
 	for _, script := range opts.Scripts {

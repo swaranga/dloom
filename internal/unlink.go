@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/swaranga/dloom/internal/logging"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,7 +18,7 @@ type UnlinkOptions struct {
 }
 
 // UnlinkPackages removes symlinks for all specified packages
-func UnlinkPackages(opts UnlinkOptions, logger *Logger) error {
+func UnlinkPackages(opts UnlinkOptions, logger *logging.Logger) error {
 	if len(opts.Packages) == 0 {
 		return fmt.Errorf("no packages specified")
 	}
@@ -36,10 +37,10 @@ func UnlinkPackages(opts UnlinkOptions, logger *Logger) error {
 }
 
 // UnlinkPackage removes symlinks for a single package
-func UnlinkPackage(pkgName string, cfg *Config, logger *Logger) error {
+func UnlinkPackage(pkgName string, cfg *Config, logger *logging.Logger) error {
 	// Check if package has conditions and if they match
 	pkgConfig := cfg.GetEffectiveConfig(pkgName, "")
-	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions) {
+	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions, logger) {
 		if cfg.ShouldBeVerbose(pkgName, "") {
 			logger.LogTrace("Skipping package %s: conditions not met", pkgName)
 		}
@@ -47,7 +48,10 @@ func UnlinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 	}
 
 	// Get the absolute path to the source package
-	pkgDir := cfg.GetSourcePath(pkgName)
+	pkgDir, err := cfg.GetSourcePath(pkgName)
+	if err != nil {
+		return fmt.Errorf("failed to get source path for package %s: %w", pkgName, err)
+	}
 
 	// Ensure package directory exists
 	pkgDirAbs, err := filepath.Abs(pkgDir)
@@ -81,7 +85,7 @@ func UnlinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 
 		// Check file-specific conditions
 		fileConfig := cfg.GetEffectiveConfig(pkgName, relPath)
-		if fileConfig.Conditions != nil && !cfg.MatchesConditions(fileConfig.Conditions) {
+		if fileConfig.Conditions != nil && !cfg.MatchesConditions(fileConfig.Conditions, logger) {
 			if cfg.ShouldBeVerbose(pkgName, relPath) {
 				logger.LogTrace("Skipping file %s: conditions not met", relPath)
 			}
@@ -89,7 +93,10 @@ func UnlinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 		}
 
 		// Construct target path
-		targetPath := cfg.GetTargetPath(pkgName, relPath)
+		targetPath, err := cfg.GetTargetPath(pkgName, relPath)
+		if err != nil {
+			return fmt.Errorf("failed to get target path for %s: %w", relPath, err)
+		}
 
 		// If it's a directory, add to the map of directories to check later
 		if info.IsDir() {
@@ -144,7 +151,7 @@ func UnlinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 }
 
 // unlinkFile removes a symlink if it points to the expected source
-func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logger *Logger) error {
+func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logger *logging.Logger) error {
 	// Check if target exists
 	fi, err := os.Lstat(targetPath)
 	if err != nil {
@@ -183,15 +190,19 @@ func unlinkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, lo
 			}
 
 			if cfg.ShouldBeVerbose(pkgName, relPath) {
-				logger.LogTrace("Removed symlink: %s\n", targetPath)
+				logger.LogTrace("Removed symlink: %s", targetPath)
 			}
 		}
 	} else if cfg.ShouldBeVerbose(pkgName, relPath) {
-		fmt.Printf("Symlink points elsewhere, not removing: %s -> %s\n", targetPath, linkDest)
+		logger.LogTrace("Symlink points elsewhere, not removing: %s -> %s\n", targetPath, linkDest)
 	}
 
 	// Restore from backup if available
-	backupPath := cfg.GetBackupPath(pkgName, relPath)
+	backupPath, err := cfg.GetBackupPath(pkgName, relPath)
+	if err != nil {
+		return fmt.Errorf("failed to get backup path for package %s: %w", pkgName, err)
+	}
+
 	if backupPath != "" {
 		// Check if backup exists
 		if _, err := os.Stat(backupPath); err == nil {

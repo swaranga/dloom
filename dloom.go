@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/swaranga/dloom/internal"
+	"github.com/swaranga/dloom/internal/logging"
 	"os"
 	"path/filepath"
 )
@@ -74,8 +75,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// initialized the logger
+	logger := logging.Logger{
+		UseColors: !noColor,
+	}
+
 	// Load config
-	cfg, err := internal.LoadConfig(configPath)
+	cfg, err := internal.LoadConfig(configPath, &logger)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
 		os.Exit(1)
@@ -110,11 +116,6 @@ func main() {
 	command := args[0]
 	cmdArgs := args[1:]
 
-	// initialized the logger
-	logger := internal.Logger{
-		UseColors: !noColor,
-	}
-
 	var cmdErr error
 	switch command {
 	case "link":
@@ -136,7 +137,7 @@ func main() {
 }
 
 // handleLink handles the "link" command
-func handleLink(args []string, cfg *internal.Config, logger *internal.Logger) error {
+func handleLink(args []string, cfg *internal.Config, logger *logging.Logger) error {
 	if len(args) == 0 {
 		return errors.New("no packages specified for link command")
 	}
@@ -150,7 +151,7 @@ func handleLink(args []string, cfg *internal.Config, logger *internal.Logger) er
 }
 
 // handleUnlink handles the "unlink" command
-func handleUnlink(args []string, cfg *internal.Config, logger *internal.Logger) error {
+func handleUnlink(args []string, cfg *internal.Config, logger *logging.Logger) error {
 	if len(args) == 0 {
 		return errors.New("no packages specified for unlink command\n" +
 			"Use: dloom unlink <package>... or dloom -p <package>[,<package>...] unlink")
@@ -165,7 +166,7 @@ func handleUnlink(args []string, cfg *internal.Config, logger *internal.Logger) 
 }
 
 // handleSetup handles the "setup" command
-func handleSetup(args []string, cfg *internal.Config, logger *internal.Logger) error {
+func handleSetup(args []string, cfg *internal.Config, logger *logging.Logger) error {
 	if len(args) == 0 {
 		return errors.New("no scripts specified for setup command")
 	}

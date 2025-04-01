@@ -10,12 +10,12 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 
 ## Overview
 
-`dloom` is a CLI tool that links and unlinks configuration files (or "dotfiles") to a development machine. It manages symlinks between a dotfiles repository and the machine's home directory (by default; overridable). The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by focusing on file-level symlinks rather than directory-level symlinks. This allows for the creation of symlinks for individual files, enabling other applications to add files to the same directories without them being tracked in your dotfiles repository.
+`dloom` is a CLI tool that links and unlinks configuration files (or "dotfiles") to a development machine. It manages symlinks between a dotfiles repository and the machine's home directory (by default; overridable). The tool is inspired from GNU Stow and other dotfile managers, but differs in its approach by focusing on **file-level symlinks** rather than directory-level symlinks. This allows for the creation of symlinks for individual files, enabling other applications to add files to the same directories without them being tracked in your dotfiles repository.
 
 ## Features
 
 - **Symlink Management**: Create and manage symlinks for your dotfiles with ease.
-- **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo.
+- **File-Level Symlinks**: Links individual files (not directories), allowing other applications to add files to the same directories without them being tracked in your dotfiles repo (e.g., `~/.ssh/`).
   - This is the main difference from GNU Stow. _It does mean that addition of a file to a directory in your dotfiles repository will not automatically create a symlink for it. You will need to run `dloom link` again to create the symlink for the new file._
   - Additionally, links for files can have different names in the target directory. This allows us you to have separate dotfiles for different environments (e.g., macOS vs linux) without needing to maintain separate branches or repositories but still have the same name for the symlinked file.
 - **Conditional Linking**: Link files only when specific conditions are met (OS, distro, installed tools, tool versions).
@@ -23,7 +23,7 @@ A lightweight, flexible dotfile manager and system bootstrapper for macOS and Li
 - **Backup System**: Automatically back up existing files before replacing them.
 - **Dry Run Mode**: Preview changes without modifying your system.
 - **Cross-Platform**: Works consistently across macOS and Linux.
-  - Windows support is not planned, but contributions are welcome.
+  - Windows support has not been tested, but contributions are welcome.
 
 ## Installation
 
@@ -153,17 +153,17 @@ Or specify a custom location with `-c path/to/config.yaml`. For easiest configur
 
 ```yaml
 # Global settings
-sourceDir: "~/dotfiles"     # Where your dotfiles are stored; default is current directory
-targetDir: "~"              # Where to create symlinks; default is home directory
-backupDir: "~/.dloom/backups"  # Where to back up existing files; default is ~/.dloom/backups
+source_dir: "~/dotfiles"     # Where your dotfiles are stored; default is current directory
+target_dir: "~"              # Where to create symlinks; default is home directory
+backup_dir: "~/.dloom/backups"  # Where to back up existing files; default is ~/.dloom/backups
 verbose: true               # Enable detailed output; default is false
 force: false                # Don't overwrite without asking; default is false
-dryRun: false               # Actually make changes; default is false
+dry_run: false               # Actually make changes; default is false
 
 # Package-specific settings
-packages:
+link_overrides:
   vim:
-    targetDir: "~/.config/nvim"  # Override target for vim package
+    target_dir: "~/.config/nvim"  # Override target for vim package
     conditions:
       os:
         - "linux"
@@ -173,14 +173,14 @@ packages:
 ### Advanced Configuration
 
 ```yaml
-packages:
+link_overrides:
   tmux:
     conditions:
       executable:
         - "tmux"  # Only link if tmux is installed
     
-    # File-specific configurations (optional; overrides package settings and only needed if defaults are not sufficient)
-    files:      
+    # File-specific configuration overrides (optional; overrides package settings and only needed if defaults are not sufficient)
+    file_overrides:
       # File with regex pattern matching
       "regex:^tmux.*\.local$":
         conditions:
@@ -189,7 +189,7 @@ packages:
       
       # Version-specific configurations
       "tmux.new.conf":
-        targetName: "tmux.conf"  # Creates the link with a different name
+        target_name: "tmux.conf"  # Creates the link with a different name
         conditions:
           executable_version:
             "tmux": ">=3.0"  # Only link for tmux 3.0+
@@ -210,8 +210,8 @@ dloom link <package>...
 # Link with options
 dloom -v -f link <package>...  # Verbose and force overwrite
 
-# Specify packages with -p flag
-dloom -p vim,tmux link
+# Use -d flag for dry run (preview only)
+dloom -d link link tmux vim
 ```
 
 ### Unlinking Dotfiles
@@ -234,7 +234,6 @@ dloom -d unlink <package>...  # Dry run (preview only)
 | `-d, -n, --dry-run` | Show what would happen without making changes |
 | `-s, --source, --src` | Source directory |
 | `-t, --target, --dest` | Target directory |
-| `-p, --package` | Package name(s) to process |
 
 ## Conditional Linking
 
@@ -242,7 +241,7 @@ dloom -d unlink <package>...  # Dry run (preview only)
 
 - **Operating System**: Link files only on specific OS
 - **Linux Distribution**: Link files only on specific distros
-- **Executable Presence**: Link files only if certain executables exist
+- **Executable Presence**: Link files only if certain executables exist (for instance use a different waybar config file for hyprland vs sway)
 - **Executable Version**: Link files only if executables meet version requirements
 
 ## Project Structure

@@ -3,6 +3,7 @@ package internal
 import (
 	"errors"
 	"fmt"
+	"github.com/swaranga/dloom/internal/logging"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +18,7 @@ type LinkOptions struct {
 }
 
 // LinkPackages creates symlinks for all specified packages
-func LinkPackages(opts LinkOptions, logger *Logger) error {
+func LinkPackages(opts LinkOptions, logger *logging.Logger) error {
 	if len(opts.Packages) == 0 {
 		return errors.New("no packages specified")
 	}
@@ -36,10 +37,10 @@ func LinkPackages(opts LinkOptions, logger *Logger) error {
 }
 
 // LinkPackage creates symlinks for a single package
-func LinkPackage(pkgName string, cfg *Config, logger *Logger) error {
+func LinkPackage(pkgName string, cfg *Config, logger *logging.Logger) error {
 	// Check if package has conditions and if they match
 	pkgConfig := cfg.GetEffectiveConfig(pkgName, "")
-	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions) {
+	if pkgConfig.Conditions != nil && !cfg.MatchesConditions(pkgConfig.Conditions, logger) {
 		if cfg.ShouldBeVerbose(pkgName, "") {
 			logger.LogTrace("Skipping package %s: conditions not met", pkgName)
 		}
@@ -47,7 +48,10 @@ func LinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 	}
 
 	// Get the absolute path to the source package
-	pkgDir := cfg.GetSourcePath(pkgName)
+	pkgDir, err := cfg.GetSourcePath(pkgName)
+	if err != nil {
+		return fmt.Errorf("failed to get source path for package %s: %w", pkgName, err)
+	}
 
 	// Ensure package directory exists
 	pkgDirAbs, err := filepath.Abs(pkgDir)
@@ -78,7 +82,7 @@ func LinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 
 		// Check file-specific conditions
 		fileConfig := cfg.GetEffectiveConfig(pkgName, relPath)
-		if fileConfig.Conditions != nil && !cfg.MatchesConditions(fileConfig.Conditions) {
+		if fileConfig.Conditions != nil && !cfg.MatchesConditions(fileConfig.Conditions, logger) {
 			if cfg.ShouldBeVerbose(pkgName, relPath) {
 				logger.LogTrace("Skipping file %s: conditions not met", relPath)
 			}
@@ -86,7 +90,10 @@ func LinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 		}
 
 		// Construct target path
-		targetPath := cfg.GetTargetPath(pkgName, relPath)
+		targetPath, err := cfg.GetTargetPath(pkgName, relPath)
+		if err != nil {
+			return fmt.Errorf("failed to get target path for package %s: %w", pkgName, err)
+		}
 
 		// If it's a directory, create it in the target directory
 		if info.IsDir() {
@@ -110,13 +117,11 @@ func LinkPackage(pkgName string, cfg *Config, logger *Logger) error {
 }
 
 // linkFile creates a symlink from sourcePath to targetPath
-func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logger *Logger) error {
+func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logger *logging.Logger) error {
 	// Create parent directories if needed
 	targetDir := filepath.Dir(targetPath)
 
-	if cfg.IsDryRun(pkgName, relPath) {
-		logger.LogDryRun("Would ensure directory exists: %s", targetDir)
-	} else {
+	if !cfg.IsDryRun(pkgName, relPath) {
 		if err := os.MkdirAll(targetDir, 0755); err != nil {
 			return fmt.Errorf("failed to create parent directory %s: %w", targetDir, err)
 		}
@@ -153,7 +158,11 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logg
 		}
 
 		// Backup if backup directory is set
-		backupPath := cfg.GetBackupPath(pkgName, relPath)
+		backupPath, err := cfg.GetBackupPath(pkgName, relPath)
+		if err != nil {
+			return fmt.Errorf("failed to get backup path for package %s: %w", pkgName, err)
+		}
+
 		if backupPath != "" {
 			backupDir := filepath.Dir(backupPath)
 
@@ -190,8 +199,19 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logg
 	if cfg.IsDryRun(pkgName, relPath) {
 		logger.LogDryRun("Would link: %s -> %s", targetPath, sourcePath)
 	} else {
-		if err := os.Symlink(sourcePath, targetPath); err != nil {
-			return fmt.Errorf("failed to create symlink from %s to %s: %w", sourcePath, targetPath, err)
+		// Expand source path
+		srcAbsPath, err := ExpandPath(sourcePath)
+		if err != nil {
+			return fmt.Errorf("failed to expand source path %s: %w", sourcePath, err)
+		}
+		// Expand target path
+		destAbsPath, err := ExpandPath(targetPath)
+		if err != nil {
+			return fmt.Errorf("failed to expand target path %s: %w", targetPath, err)
+		}
+
+		if err := os.Symlink(srcAbsPath, destAbsPath); err != nil {
+			return fmt.Errorf("failed to create symlink from %s to %s: %w", srcAbsPath, destAbsPath, err)
 		}
 
 		if cfg.ShouldBeVerbose(pkgName, relPath) {

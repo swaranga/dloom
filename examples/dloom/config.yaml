@@ -1,28 +1,28 @@
 # dloom configuration file
-version: 0.0.1
+version: 0.0.1 # Version of the configuration file
 
 # Global configuration
-sourceDir: "/home/username/dotfiles"        # Base directory for dotfiles
-targetDir: "/home/username"                 # Where symlinks will be created
-backupDir: "/home/username/.dloom/backups"  # Where existing files are backed up
+source_dir: "/home/username/dotfiles"        # Base directory for dotfiles
+target_dir: "/home/username"                 # Where symlinks will be created
+backup_dir: "/home/username/.dloom/backups"  # Where existing files are backed up
 force: false                                # Don't replace files without asking
 verbose: true                               # Show detailed output
-dryRun: false                               # Actually make changes
+dry_run: false                               # Actually make changes
 
-# Package-specific configurations
-packages:
+# Package-specific override configurations
+link_overrides:
   # Vim configuration
   vim:
-    targetDir: "/home/username/.config/vim"  # Override target for this package
+    target_dir: "/home/username/.config/vim"  # Override target for this package
     conditions:                              # Only link if these conditions are met
       os:                                    # OS conditions (OR logic within this group)
         - "linux"
         - "darwin"
       executable:                    # Required executables (AND logic with other groups)
         - "vim"
-    files:                           # File-specific configurations
+    file_overrides:                           # File-specific configurations
       "vimrc":                       # Exact file match
-        targetDir: "/home/username"  # Override target directory for this file
+        target_dir: "/home/username"  # Override target directory for this file
       "regex:^colors/.*\\.vim$":     # Regex pattern for matching files
         conditions:                  # File-specific conditions
           os:
@@ -34,43 +34,43 @@ packages:
 
   # Neovim configuration
   nvim:
-    targetDir: "/home/username/.config/nvim"
+    target_dir: "/home/username/.config/nvim"
     conditions:
       executable:
         - "nvim"
-    files:
+    file_overrides:
       "init.vim":
         force: true                  # Always overwrite init.vim without asking
 
   # Shell configurations
   shell:
-    files:
+    file_overrides:
       "bashrc":
-        targetDir: "/home/username"  # Will create ~/.bashrc
+        target_dir: "/home/username"  # Will create ~/.bashrc
         conditions:
           executable:
             - "bash"
       "zshrc":
-        targetDir: "/home/username"  # Will create ~/.zshrc
+        target_dir: "/home/username"  # Will create ~/.zshrc
         conditions:
           executable:
             - "zsh"
       "common_aliases":              # Shared between shells
-        targetDir: "/home/username"  # Will create ~/.common_aliases
+        target_dir: "/home/username"  # Will create ~/.common_aliases
 
   # Git configuration with OS-specific settings
   git:
-    files:
+    file_overrides:
       "gitconfig.common":            # Common git config
-        targetDir: "/home/username"
+        target_dir: "/home/username"
         force: true
       "gitconfig.linux":
-        targetDir: "/home/username"
+        target_dir: "/home/username"
         conditions:
           os:
             - "linux"
       "gitconfig.darwin":
-        targetDir: "/home/username"
+        target_dir: "/home/username"
         conditions:
           os:
             - "darwin"
@@ -80,19 +80,33 @@ packages:
     conditions:
       executable:
         - "tmux"
-    files:
+    file_overrides:
       "tmux.conf.new":
-        targetDir: "/home/username"
+        target_dir: "/home/username"
         targetName: ".tmux.conf"  # Symlink will be created as .tmux.conf
         conditions:
           executable_version:
             "tmux": ">=3.0"
       "tmux.conf.legacy":
-        targetDir: "/home/username"
+        target_dir: "/home/username"
         targetName: ".tmux.conf"  # Symlink will be created as .tmux.conf
         conditions:
           executable_version:
             "tmux": "<3.0"
+  waybar:
+    file_overrides:
+      "configc_hyprland.json":
+        target_name: "configc.json" # Target name for the symlink
+        conditions:
+          executable: ["hyprland"] # Only link if Hyprland is installed
+      "configc_sway.json":
+        target_name: "configc.json"
+        conditions:
+          executable: ["sway"] # Only link if Sway is installed
+      "start_waybar_sway.sh":
+        target_name: "start_waybar.sh"
+        conditions:
+          executable: ["sway"]
 
   # Development tools
   dev:
@@ -100,7 +114,7 @@ packages:
       os:
         - "linux"
         - "darwin"
-    files:
+    file_overrides:
       "regex:^\\.?eslintrc(\\.json)?$":  # Match .eslintrc or eslintrc.json
         conditions:
           executable:
@@ -114,7 +128,7 @@ packages:
             - "node"
             - "npm"
       ".editorconfig":               # Editor configuration
-        targetDir: "/home/username"  # Goes in home directory
+        target_dir: "/home/username"  # Goes in home directory
         force: true                  # Always overwrite
 
   # Linux-specific configurations
@@ -122,19 +136,19 @@ packages:
     conditions:
       os:
         - "linux"
-    files:
+    file_overrides:
       "i3/config":                   # i3 window manager config
-        targetDir: "/home/username/.config/i3"
+        target_dir: "/home/username/.config/i3"
         conditions:
           executable:
             - "i3"
       "regex:^polybar/.*":           # All polybar configs
-        targetDir: "/home/username/.config/polybar"
+        target_dir: "/home/username/.config/polybar"
         conditions:
           executable:
             - "polybar"
       "picom.conf":
-        targetDir: "/home/username/.config"
+        target_dir: "/home/username/.config"
         conditions:
           executable:
             - "picom"
@@ -144,11 +158,11 @@ packages:
     conditions:
       os:
         - "darwin"
-    files:
+    file_overrides:
       "DefaultKeyBinding.dict":
-        targetDir: "/home/username/Library/KeyBindings"
+        target_dir: "/home/username/Library/KeyBindings"
       "regex:^karabiner/.*":
-        targetDir: "/home/username/.config/karabiner"
+        target_dir: "/home/username/.config/karabiner"
         conditions:
           executable:
             - "karabiner_cli"
@@ -158,9 +172,9 @@ packages:
     conditions:
       distro:
         - "arch"
-    files:
+    file_overrides:
       "pacman.conf":
-        targetDir: "/etc"
+        target_dir: "/etc"
         backupDir: "/home/username/.dloom/backups/etc"
         conditions:
           # Only link if user has sudo access to modify system files
@@ -172,9 +186,9 @@ packages:
       distro:
         - "ubuntu"
         - "debian"
-    files:
+    file_overrides:
       "apt/preferences":
-        targetDir: "/etc/apt"
+        target_dir: "/etc/apt"
         backupDir: "/home/username/.dloom/backups/etc/apt"
         conditions:
           executable:
