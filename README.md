@@ -169,6 +169,7 @@ This will show what files would be linked or unlinked without actually performin
 - If you have different `waybar` config files for `sway` and `hyprland`, you can use `dloom` to link the correct one based on the presence of the executable (`hyprland` or `sway`) on the machine.
 - If you have different dotfiles for different operating systems, you can use `dloom` to link the correct one based on the OS. For instance, a different `~/.zshrc` for macOS and Linux.
   - For example, you can have a `.zshrc_linux` and a `~/.zshrc_mac` file in your dotfiles repository. Then, you can use `dloom` to link to the correct one based on the OS. The symlink can be configured to be the standard `~/.zshrc` file, but the actual file in the dotfiles repository is the operating system specific one. This way, you can have different configuration files for different operating systems without needing to maintain separate branches or repositories.
+- If you are sharing a dotfiles repository with multiple users, you can use `dloom` to link the correct files based on the user. For instance, a different `~/.zshrc` for different users.
 
 Configuration is done via a YAML file, which allows hierarchical overrides from global, package-specific to individual file-specific settings. By default, `dloom` looks for a `config.yaml` file in the following directories in order of precedence:
 1. `./dloom/config.yaml` (in current working directory)
@@ -216,9 +217,11 @@ link_overrides:
     file_overrides:
       # File with regex pattern matching
       "regex:^tmux.*\.local$":
-        conditions:
+        conditions: # Multiple conditions specified; will be linked only if all conditions are met
           os:
             - "darwin"  # Only link on macOS
+          user:
+            - "user_name"  # Only link for user 'user_name'
       
       # Version-specific configurations
       "tmux.new.conf": # File name; must match the exact name in the source directory

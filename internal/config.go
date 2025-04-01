@@ -48,6 +48,7 @@ type ConditionSet struct {
 	Distro            []string          `yaml:"distro"`
 	Executable        []string          `yaml:"executable"`
 	ExecutableVersion map[string]string `yaml:"executable_version"`
+	User              []string          `yaml:"user"`
 }
 
 // DefaultConfig returns the default configuration
@@ -320,6 +321,12 @@ func (c *Config) MatchesConditions(conditionSet *ConditionSet, logger *logging.L
 	// Check executable version conditions
 	if len(conditionSet.ExecutableVersion) > 0 &&
 		!conditions.MatchesExecutableVersionCondition(conditionSet.ExecutableVersion, logger) {
+		return false
+	}
+
+	// Check user conditions
+	if len(conditionSet.User) > 0 &&
+		!conditions.MatchesUserCondition(conditionSet.User) {
 		return false
 	}
 
