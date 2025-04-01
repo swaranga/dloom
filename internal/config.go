@@ -231,7 +231,7 @@ func (c *Config) GetEffectiveConfig(packageName, relativePath string) *FileConfi
 		// Check for file-specific settings
 		var fileConfig *FileConfig
 
-		// First, try exact file match
+		// First, try exact file match; regardless of declaration order
 		// Get the file name from the relative path
 		var relativePathTargetName = filepath.Base(relativePath)
 		if fc, exists := pkg.Files[relativePathTargetName]; exists {

@@ -107,6 +107,12 @@ link_overrides:
         target_name: "start_waybar.sh"
         conditions:
           executable: ["sway"]
+      "regex:^.*hyprland.*": # Regex to match all other files with hyprland in the name
+        conditions:
+          executable: ["hyprland"]
+      "regex:^.*sway.*": # Regex to match all other files with sway in the name
+        conditions:
+          executable: ["sway"]
 
   # Development tools
   dev:

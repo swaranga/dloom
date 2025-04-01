@@ -143,6 +143,29 @@ To preview what would happen without making any changes, use the `-d` or `--dry-
 dloom -d link vim
 ```
 
+Sample output:
+
+```
+➜  dotfiles git:(main) ✗ dloom -d link dloom zsh alacritty kitty ghostty eza sway waybar
+[DRY RUN]: Would link: /home/user_name/.config/dloom/config.yaml -> /home/user_name/dotfiles/dloom/config.yaml
+[DRY RUN]: Would link: /home/user_name/.config/zsh/.zshrc-common.zsh -> /home/user_name/dotfiles/zsh/.config/zsh/.zshrc-common.zsh
+[DRY RUN]: Would link: /home/user_name/.config/zsh/.zshrc-git.zsh -> /home/user_name/dotfiles/zsh/.config/zsh/.zshrc-git.zsh
+[DRY RUN]: Would link: /home/user_name/.config/zsh/.zshrc-nflx.zsh -> /home/user_name/dotfiles/zsh/.config/zsh/.zshrc-nflx.zsh
+[DRY RUN]: Would link: /home/user_name/.zshrc -> /home/user_name/dotfiles/zsh/.config/zsh/.zshrc-ubuntu.zsh
+[DRY RUN]: Would link: /home/user_name/.config/alacritty/alacritty.toml -> /home/user_name/dotfiles/alacritty/.config/alacritty/alacritty.toml
+[DRY RUN]: Would link: /home/user_name/.config/alacritty/catppuccin-mocha.toml -> /home/user_name/dotfiles/alacritty/.config/alacritty/catppuccin-mocha.toml
+[DRY RUN]: Would link: /home/user_name/.config/kitty/current-theme.conf -> /home/user_name/dotfiles/kitty/.config/kitty/current-theme.conf
+[DRY RUN]: Would link: /home/user_name/.config/kitty/kitty.conf -> /home/user_name/dotfiles/kitty/.config/kitty/kitty.conf
+[DRY RUN]: Would link: /home/user_name/.config/ghostty/config -> /home/user_name/dotfiles/ghostty/.config/ghostty/config
+[DRY RUN]: Would link: /home/user_name/.config/ghostty/themes/tilix -> /home/user_name/dotfiles/ghostty/.config/ghostty/themes/tilix
+[DRY RUN]: Would link: /home/user_name/.config/eza/theme.yml -> /home/user_name/dotfiles/eza/.config/eza/theme.yml
+[DRY RUN]: Would link: /home/user_name/.config/sway/config -> /home/user_name/dotfiles/sway/.config/sway/config
+[DRY RUN]: Would link: /home/user_name/.config/waybar/configc.json -> /home/user_name/dotfiles/waybar/.config/waybar/configc_sway.json
+[DRY RUN]: Would link: /home/user_name/.config/waybar/mocha.css -> /home/user_name/dotfiles/waybar/.config/waybar/mocha.css
+[DRY RUN]: Would link: /home/user_name/.config/waybar/start_waybar.sh -> /home/user_name/dotfiles/waybar/.config/waybar/start_waybar_sway.sh
+[DRY RUN]: Would link: /home/user_name/.config/waybar/style.css -> /home/user_name/dotfiles/waybar/.config/waybar/style.css
+```
+
 This will show you what files would be linked or unlinked without actually performing the operation.
 
 ## Configuration (Optional)
@@ -189,6 +212,7 @@ link_overrides:
         - "tmux"  # Only link if tmux is installed
     
     # File-specific configuration overrides (optional; overrides package settings and only needed if defaults are not sufficient)
+    # File name matching attempts to match the exact file name first before trying regex matching regardless of the declaration order of the overrides
     file_overrides:
       # File with regex pattern matching
       "regex:^tmux.*\.local$":

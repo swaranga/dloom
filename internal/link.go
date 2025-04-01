@@ -142,18 +142,21 @@ func linkFile(sourcePath, targetPath, relPath, pkgName string, cfg *Config, logg
 
 		// Target exists but is not the correct symlink
 		if !cfg.ShouldForce(pkgName, relPath) {
-			// Ask user for confirmation before removing
-			logger.LogInfoNoReturn("Target already exists: %s, rel-path: %s, pkg: %s. Replace? [y/N] ", targetPath, relPath, pkgName)
+			// only ask confirmation if we are running in non-dryrun mode
+			if !cfg.IsDryRun(pkgName, relPath) {
+				// Ask user for confirmation before removing
+				logger.LogInfoNoReturn("Target already exists: %s, rel-path: %s, pkg: %s. Replace? [y/N] ", targetPath, relPath, pkgName)
 
-			var response string
-			_, err = fmt.Scanln(&response)
-			if err != nil {
-				return fmt.Errorf("failed to read input: %w", err)
-			}
+				var response string
+				_, err = fmt.Scanln(&response)
+				if err != nil {
+					return fmt.Errorf("failed to read input: %w", err)
+				}
 
-			if strings.ToLower(response) != "y" {
-				logger.LogInfo("Skipping file: %s", relPath)
-				return nil
+				if strings.ToLower(response) != "y" {
+					logger.LogInfo("Skipping file: %s", relPath)
+					return nil
+				}
 			}
 		}
 
