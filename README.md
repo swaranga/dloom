@@ -272,10 +272,12 @@ dloom -d unlink <package>...  # Dry run (preview only)
 
 `dloom` supports conditional linking based on:
 
-- **Operating System**: Link files only on specific OS
-- **Linux Distribution**: Link files only on specific distros
-- **Executable Presence**: Link files only if certain executables exist (for instance use a different waybar config file for hyprland vs sway)
-- **Executable Version**: Link files only if executables meet version requirements
+- **Operating System**: Link files only on specific OS.
+- **Linux Distribution**: Link files only on specific distros.
+- **Executable Presence**: Link files only if certain executables exist (for instance use a different waybar config file for hyprland vs sway).
+- **Executable Version**: Link files only if executables meet version requirements.
+
+When multiple conditions are specified, they are AND-ed together. For example, if you want to link a file only if the OS is Linux and the executable `git` is installed, you can specify both conditions in the configuration file. For a given condition, if multiple values are specified, they are OR-ed together. For example, if you want to link a file only if the OS is either Linux or macOS, you can specify both values in the configuration file.
 
 ## Project Structure
 
