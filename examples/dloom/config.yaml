@@ -175,7 +175,7 @@ link_overrides:
     file_overrides:
       "pacman.conf":
         target_dir: "/etc"
-        backupDir: "/home/username/.dloom/backups/etc"
+        backup_dir: "/home/username/.dloom/backups/etc"
         conditions:
           # Only link if user has sudo access to modify system files
           executable:
@@ -189,7 +189,7 @@ link_overrides:
     file_overrides:
       "apt/preferences":
         target_dir: "/etc/apt"
-        backupDir: "/home/username/.dloom/backups/etc/apt"
+        backup_dir: "/home/username/.dloom/backups/etc/apt"
         conditions:
           executable:
             - "sudo"
