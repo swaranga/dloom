@@ -1,5 +1,7 @@
 # dloom
 
+> 🚨 This project has moved to [github.com/dloomorg/dloom](github.com/dloomorg/dloom) 🚨
+
 A lightweight, flexible dotfile manager and system bootstrapper for macOS and Linux.
 
 ![Build Status](https://github.com/swaranga/dloom/actions/workflows/build.yml/badge.svg)
