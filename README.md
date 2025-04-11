@@ -1,3 +1,3 @@
 # dloom
 
-> 🚨 This project has moved to [github.com/dloomorg/dloom](github.com/dloomorg/dloom) 🚨
+> 🚨 This project has moved to [dloomorg/dloom](https://github.com/dloomorg/dloom) 🚨
